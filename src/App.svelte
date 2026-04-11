@@ -3,6 +3,7 @@
   import MarkdownEditor from './lib/MarkdownEditor.svelte';
   import MarkdownPreview from './lib/MarkdownPreview.svelte';
   import { getCurrentWindow } from '@tauri-apps/api/webviewWindow';
+  import * as api from './lib/api';
   
   let markdownContent = $state(`# Welcome to PureDraft 🎵
 
@@ -88,25 +89,57 @@ Enjoy writing! ✨`);
       console.error('Failed to close window:', error);
     }
   }
+  
+  // 文件操作功能
+  async function handleNewFile() {
+    markdownContent = '# New Document\n\nStart writing here...';
+  }
+  
+  async function handleOpenFile() {
+    try {
+      // 在 Tauri 中使用文件对话框
+      // 在 Web 版本中调用 API
+      const files = await api.listFiles();
+      if (files.length > 0) {
+        const fileData = await api.readFile(files[0].path);
+        if (fileData) {
+          markdownContent = fileData.content;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to open file:', error);
+    }
+  }
+  
+  async function handleSaveFile() {
+    try {
+      // 示例路径，实际应用中应该让用户选择
+      const filePath = 'document.md';
+      await api.writeFile(filePath, markdownContent);
+      console.log('File saved successfully');
+    } catch (error) {
+      console.error('Failed to save file:', error);
+    }
+  }
 </script>
 
 <Layout>
   <div class="app">
     <header class="toolbar">
       <div class="toolbar-left">
-        <button class="toolbar-button" title="新建">
+        <button class="toolbar-button" title="新建" onclick={handleNewFile}>
           <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
             <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
           </svg>
           <span>新建</span>
         </button>
-        <button class="toolbar-button" title="打开">
+        <button class="toolbar-button" title="打开" onclick={handleOpenFile}>
           <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
             <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
           </svg>
           <span>打开</span>
         </button>
-        <button class="toolbar-button" title="保存">
+        <button class="toolbar-button" title="保存" onclick={handleSaveFile}>
           <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
             <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
           </svg>
