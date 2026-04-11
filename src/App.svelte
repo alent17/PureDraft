@@ -2,8 +2,22 @@
   import Layout from './lib/Layout.svelte';
   import MarkdownEditor from './lib/MarkdownEditor.svelte';
   import MarkdownPreview from './lib/MarkdownPreview.svelte';
-  import { getCurrentWindow } from '@tauri-apps/api/webviewWindow';
   import * as api from './lib/api';
+  
+  // Tauri 窗口控制（仅在桌面环境中可用）
+  let appWindow = null;
+  
+  async function initWindow() {
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/webviewWindow');
+      appWindow = getCurrentWindow();
+    } catch (error) {
+      console.log('Tauri API not available, running in web mode');
+    }
+  }
+  
+  // 在组件挂载时初始化
+  initWindow();
   
   let markdownContent = $state(`# Welcome to PureDraft 🎵
 
@@ -65,8 +79,9 @@ Enjoy writing! ✨`);
   
   async function minimizeWindow() {
     try {
-      const appWindow = getCurrentWindow();
-      await appWindow.minimize();
+      if (appWindow) {
+        await appWindow.minimize();
+      }
     } catch (error) {
       console.error('Failed to minimize window:', error);
     }
@@ -74,8 +89,9 @@ Enjoy writing! ✨`);
   
   async function toggleMaximize() {
     try {
-      const appWindow = getCurrentWindow();
-      await appWindow.toggleMaximize();
+      if (appWindow) {
+        await appWindow.toggleMaximize();
+      }
     } catch (error) {
       console.error('Failed to toggle maximize:', error);
     }
@@ -83,8 +99,9 @@ Enjoy writing! ✨`);
   
   async function closeWindow() {
     try {
-      const appWindow = getCurrentWindow();
-      await appWindow.close();
+      if (appWindow) {
+        await appWindow.close();
+      }
     } catch (error) {
       console.error('Failed to close window:', error);
     }
