@@ -52,7 +52,8 @@ Enjoy writing! ✨`);
   let splitPosition = $state(50);
   let isResizing = $state(false);
   
-  function startResizing() {
+  function startResizing(event) {
+    event.preventDefault();
     isResizing = true;
     document.body.style.cursor = 'col-resize';
     document.addEventListener('mousemove', resize);
@@ -114,28 +115,47 @@ Enjoy writing! ✨`);
   
   async function handleOpenFile() {
     try {
-      // 在 Tauri 中使用文件对话框
-      // 在 Web 版本中调用 API
+      // 尝试从后端加载文件列表
       const files = await api.listFiles();
       if (files.length > 0) {
         const fileData = await api.readFile(files[0].path);
         if (fileData) {
           markdownContent = fileData.content;
+          return;
         }
+      }
+      // 如果后端不可用，从本地存储加载
+      const savedContent = localStorage.getItem('puredraft-content');
+      if (savedContent) {
+        markdownContent = savedContent;
       }
     } catch (error) {
       console.error('Failed to open file:', error);
+      // 回退到本地存储
+      const savedContent = localStorage.getItem('puredraft-content');
+      if (savedContent) {
+        markdownContent = savedContent;
+      }
     }
   }
   
   async function handleSaveFile() {
     try {
-      // 示例路径，实际应用中应该让用户选择
+      // 首先尝试保存到后端
       const filePath = 'document.md';
-      await api.writeFile(filePath, markdownContent);
-      console.log('File saved successfully');
+      const result = await api.writeFile(filePath, markdownContent);
+      if (result) {
+        console.log('File saved successfully to backend');
+      } else {
+        // 如果后端不可用，保存到本地存储
+        localStorage.setItem('puredraft-content', markdownContent);
+        console.log('File saved to local storage');
+      }
     } catch (error) {
       console.error('Failed to save file:', error);
+      // 回退到本地存储
+      localStorage.setItem('puredraft-content', markdownContent);
+      console.log('File saved to local storage (fallback)');
     }
   }
 </script>
@@ -193,7 +213,7 @@ Enjoy writing! ✨`);
         <MarkdownEditor bind:value={markdownContent} />
       </div>
       
-      <div class="resizer" onmousedown={startResizing}></div>
+      <div class="resizer" role="separator" aria-valuenow={splitPosition} onmousedown={startResizing} onmouseup={stopResizing}></div>
       
       <div class="preview-pane" style="width: {100 - splitPosition}%">
         <div class="pane-header">
