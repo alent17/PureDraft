@@ -2,6 +2,7 @@
   import Layout from './lib/Layout.svelte';
   import MarkdownEditor from './lib/MarkdownEditor.svelte';
   import MarkdownPreview from './lib/MarkdownPreview.svelte';
+  import { getCurrentWindow } from '@tauri-apps/api/webviewWindow';
   
   let markdownContent = $state(`# Welcome to PureDraft 🎵
 
@@ -61,17 +62,31 @@ Enjoy writing! ✨`);
     document.removeEventListener('mouseup', stopResizing);
   }
   
-  function minimizeWindow() {
-    // Tauri API will be available in the desktop app
-    console.log('Minimize window');
+  async function minimizeWindow() {
+    try {
+      const appWindow = getCurrentWindow();
+      await appWindow.minimize();
+    } catch (error) {
+      console.error('Failed to minimize window:', error);
+    }
   }
   
-  function toggleMaximize() {
-    console.log('Toggle maximize');
+  async function toggleMaximize() {
+    try {
+      const appWindow = getCurrentWindow();
+      await appWindow.toggleMaximize();
+    } catch (error) {
+      console.error('Failed to toggle maximize:', error);
+    }
   }
   
-  function closeWindow() {
-    console.log('Close window');
+  async function closeWindow() {
+    try {
+      const appWindow = getCurrentWindow();
+      await appWindow.close();
+    } catch (error) {
+      console.error('Failed to close window:', error);
+    }
   }
 </script>
 
