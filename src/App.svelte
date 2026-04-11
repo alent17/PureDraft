@@ -109,8 +109,12 @@ Enjoy writing! ✨`);
   }
   
   // 文件操作功能
+  let isSaving = $state(false);
+  let saveStatus = $state('');
+  
   async function handleNewFile() {
     markdownContent = '# New Document\n\nStart writing here...';
+    saveStatus = '';
   }
   
   async function handleOpenFile() {
@@ -121,6 +125,7 @@ Enjoy writing! ✨`);
         const fileData = await api.readFile(files[0].path);
         if (fileData) {
           markdownContent = fileData.content;
+          saveStatus = '已从后端加载';
           return;
         }
       }
@@ -128,6 +133,7 @@ Enjoy writing! ✨`);
       const savedContent = localStorage.getItem('puredraft-content');
       if (savedContent) {
         markdownContent = savedContent;
+        saveStatus = '已从本地加载';
       }
     } catch (error) {
       console.error('Failed to open file:', error);
@@ -135,27 +141,38 @@ Enjoy writing! ✨`);
       const savedContent = localStorage.getItem('puredraft-content');
       if (savedContent) {
         markdownContent = savedContent;
+        saveStatus = '已从本地加载';
       }
     }
   }
   
   async function handleSaveFile() {
+    isSaving = true;
     try {
       // 首先尝试保存到后端
       const filePath = 'document.md';
       const result = await api.writeFile(filePath, markdownContent);
       if (result) {
+        saveStatus = '已保存到后端';
         console.log('File saved successfully to backend');
       } else {
         // 如果后端不可用，保存到本地存储
         localStorage.setItem('puredraft-content', markdownContent);
+        saveStatus = '已保存到本地';
         console.log('File saved to local storage');
       }
     } catch (error) {
       console.error('Failed to save file:', error);
       // 回退到本地存储
       localStorage.setItem('puredraft-content', markdownContent);
+      saveStatus = '已保存到本地（备份）';
       console.log('File saved to local storage (fallback)');
+    } finally {
+      isSaving = false;
+      // 3 秒后清除状态
+      setTimeout(() => {
+        saveStatus = '';
+      }, 3000);
     }
   }
 </script>
@@ -185,6 +202,12 @@ Enjoy writing! ✨`);
       </div>
       <div class="toolbar-center" role="banner">
         <span class="status-text">PureDraft</span>
+        {#if saveStatus}
+          <span class="save-status">{saveStatus}</span>
+        {/if}
+        {#if isSaving}
+          <span class="saving-indicator">保存中...</span>
+        {/if}
       </div>
       <div class="toolbar-right">
         <button class="window-control-button" onclick={minimizeWindow} title="最小化">
@@ -316,6 +339,44 @@ Enjoy writing! ✨`);
     font-size: var(--text-caption);
     color: var(--text-secondary);
     font-weight: var(--weight-semibold);
+  }
+  
+  .save-status {
+    margin-left: var(--space-16);
+    font-family: var(--font-ui);
+    font-size: var(--text-caption);
+    color: var(--brand-green);
+    font-weight: var(--weight-medium);
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  .saving-indicator {
+    margin-left: var(--space-16);
+    font-family: var(--font-ui);
+    font-size: var(--text-caption);
+    color: var(--text-secondary);
+    font-weight: var(--weight-medium);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
   }
   
   .editor-preview-container {

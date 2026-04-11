@@ -11,8 +11,8 @@
 <div class="editor-container">
   <textarea
     bind:this={editorRef}
+    bind:value
     class="markdown-editor"
-    {value}
     {placeholder}
     oninput={handleInput}
     spellcheck="false"
