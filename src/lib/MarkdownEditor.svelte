@@ -2,10 +2,6 @@
   let { value = '', placeholder = '开始编写 Markdown...' } = $props();
   
   let editorRef;
-  
-  function handleInput(event) {
-    value = event.target.value;
-  }
 </script>
 
 <div class="editor-container">
@@ -14,7 +10,6 @@
     bind:value
     class="markdown-editor"
     {placeholder}
-    oninput={handleInput}
     spellcheck="false"
   ></textarea>
 </div>

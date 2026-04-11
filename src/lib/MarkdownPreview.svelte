@@ -3,7 +3,17 @@
   
   let { content = '' } = $props();
   
-  let htmlContent = $derived(marked.parse(content || ''));
+  // 使用 $effect 确保响应式更新
+  let htmlContent = $state('');
+  
+  $effect(() => {
+    try {
+      htmlContent = marked.parse(content || '');
+    } catch (error) {
+      console.error('Markdown parsing error:', error);
+      htmlContent = '<p>Error parsing markdown</p>';
+    }
+  });
 </script>
 
 <div class="preview-container">
