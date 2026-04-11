@@ -102,6 +102,16 @@ Enjoy writing! ✨`);
     try {
       if (appWindow) {
         await appWindow.close();
+      } else {
+        // 在浏览器模式下，提示用户或执行其他操作
+        const confirmed = confirm('确定要关闭吗？');
+        if (confirmed) {
+          window.close();
+          // 如果 window.close() 不起作用，显示提示
+          setTimeout(() => {
+            alert('请手动关闭浏览器标签页');
+          }, 100);
+        }
       }
     } catch (error) {
       console.error('Failed to close window:', error);
@@ -118,55 +128,61 @@ Enjoy writing! ✨`);
   }
   
   async function handleOpenFile() {
-    try {
-      // 尝试从后端加载文件列表
-      const files = await api.listFiles();
-      if (files.length > 0) {
-        const fileData = await api.readFile(files[0].path);
-        if (fileData) {
-          markdownContent = fileData.content;
-          saveStatus = '已从后端加载';
-          return;
-        }
+    // 创建文件输入元素
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.md,.markdown,.txt';
+    
+    input.onchange = async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          markdownContent = e.target.result;
+          saveStatus = `已打开: ${file.name}`;
+          // 保存到本地存储作为备份
+          localStorage.setItem('puredraft-content', markdownContent);
+          // 同时保存到后端作为备份
+          api.writeFile(file.name, markdownContent).catch(err => 
+            console.log('Backend save failed, using local storage only')
+          );
+        };
+        reader.readAsText(file);
       }
-      // 如果后端不可用，从本地存储加载
-      const savedContent = localStorage.getItem('puredraft-content');
-      if (savedContent) {
-        markdownContent = savedContent;
-        saveStatus = '已从本地加载';
-      }
-    } catch (error) {
-      console.error('Failed to open file:', error);
-      // 回退到本地存储
-      const savedContent = localStorage.getItem('puredraft-content');
-      if (savedContent) {
-        markdownContent = savedContent;
-        saveStatus = '已从本地加载';
-      }
-    }
+    };
+    
+    input.click();
   }
   
   async function handleSaveFile() {
     isSaving = true;
     try {
-      // 首先尝试保存到后端
-      const filePath = 'document.md';
-      const result = await api.writeFile(filePath, markdownContent);
-      if (result) {
-        saveStatus = '已保存到后端';
-        console.log('File saved successfully to backend');
-      } else {
-        // 如果后端不可用，保存到本地存储
+      // 创建并下载 Markdown 文件
+      const blob = new Blob([markdownContent], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'document.md';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // 同时保存到后端和本地存储作为备份
+      try {
+        await api.writeFile('document.md', markdownContent);
+        saveStatus = '已保存到本地文件 + 后端备份';
+      } catch (backendError) {
         localStorage.setItem('puredraft-content', markdownContent);
-        saveStatus = '已保存到本地';
-        console.log('File saved to local storage');
+        saveStatus = '已保存到本地文件 + 本地存储备份';
       }
+      
+      console.log('File saved successfully');
     } catch (error) {
       console.error('Failed to save file:', error);
       // 回退到本地存储
       localStorage.setItem('puredraft-content', markdownContent);
-      saveStatus = '已保存到本地（备份）';
-      console.log('File saved to local storage (fallback)');
+      saveStatus = '保存失败，已保存到本地存储';
     } finally {
       isSaving = false;
       // 3 秒后清除状态
