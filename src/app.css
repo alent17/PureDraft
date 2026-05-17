@@ -1,0 +1,227 @@
+/* ==================== CSS Variables ==================== */
+
+:root {
+  --titlebar-height: 32px;
+  --toolbar-height: 36px;
+  --tabbar-height: 36px;
+  --sidebar-width: 220px;
+  --sidebar-collapsed-width: 36px;
+  --statusbar-height: 26px;
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+
+  --color-bg-rgb: 32, 32, 32;
+  --color-bg-alpha: 0.88;
+
+  --acrylic-bg: var(--color-toolbar-bg);
+  --acrylic-bg-fallback: var(--color-toolbar-bg);
+  --acrylic-sidebar-bg: var(--color-sidebar-bg);
+  --acrylic-content-bg: var(--color-bg);
+  --acrylic-editor-bg: var(--color-editor-bg);
+  --acrylic-statusbar-bg: var(--color-statusbar-bg);
+
+  --font-mono: "Cascadia Code", "JetBrains Mono", "Fira Code", Consolas, monospace;
+}
+
+/* ==================== 亚克力材质全局切换 ==================== */
+
+:root.acrylic-on,
+.app.acrylic-on {
+  --acrylic-bg: rgba(var(--color-bg-rgb), 0.55);
+  --acrylic-bg-fallback: rgba(var(--color-bg-rgb), 0.65);
+  --acrylic-sidebar-bg: rgba(var(--color-bg-rgb), 0.6);
+  --acrylic-content-bg: transparent;
+  --acrylic-editor-bg: rgba(var(--color-bg-rgb), 0.5);
+  --acrylic-statusbar-bg: rgba(0, 120, 212, 0.7);
+}
+
+/* ==================== WinUI 3 Dark Theme (default) ==================== */
+
+:root,
+[data-mode="dark"] {
+  --color-bg: #202020;
+  --color-bg-secondary: #2c2c2c;
+  --color-bg-hover: #333333;
+  --color-bg-active: #393939;
+  --color-ink: #ffffff;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b0d6ff;
+  --color-slate: #999999;
+  --color-muted: #666666;
+  --color-border: #3b3b3b;
+  --color-border-subtle: #2e2e2e;
+  --color-shadow: rgba(0, 0, 0, 0.5);
+  --color-shadow-md: rgba(0, 0, 0, 0.6);
+
+  --color-accent: #60cdff;
+  --color-accent-hover: #88d8ff;
+
+  --color-editor-bg: #1f1f1f;
+  --color-editor-text: #d4d4d4;
+  --color-editor-gutter: #1f1f1f;
+  --color-editor-gutter-text: #858585;
+  --color-editor-active-line: rgba(96, 205, 255, 0.04);
+  --color-editor-tooltip: #2c2c2c;
+
+  --color-preview-code-bg: #0d0d0d;
+  --color-preview-code-text: #abb2bf;
+
+  --color-statusbar-bg: #0078d4;
+  --color-statusbar-border: #3b3b3b;
+
+  --color-sidebar-bg: #282828;
+  --color-sidebar-active: #383838;
+
+  --color-toolbar-bg: #2c2c2c;
+  --color-toolbar-border: #3b3b3b;
+
+  --color-overlay: rgba(0, 0, 0, 0.55);
+
+  --color-selection: rgba(96, 205, 255, 0.25);
+
+  --shadow-titlebar: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-sidebar: 1px 0 4px rgba(0, 0, 0, 0.25);
+  --shadow-statusbar: 0 -1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.6);
+
+  --color-btn-icon: #d4e4f7;
+  --color-btn-icon-hover: #ffffff;
+  --color-btn-icon-active: var(--color-accent);
+  --color-btn-icon-disabled: #555555;
+  --color-btn-bg-hover: rgba(255, 255, 255, 0.08);
+  --color-error-text: #f44747;
+}
+
+/* ==================== WinUI 3 Light Theme ==================== */
+
+[data-mode="light"] {
+  --color-bg: #f3f3f3;
+  --color-bg-rgb: 243, 243, 243;
+  --color-bg-alpha: 0.88;
+  --color-bg-secondary: #ffffff;
+  --color-bg-hover: #e6e6e6;
+  --color-bg-active: #dcdcdc;
+  --color-ink: #171717;
+  --color-text-primary: #171717;
+  --color-text-secondary: #003e92;
+  --color-slate: #616161;
+  --color-muted: #8a8a8a;
+  --color-border: #d1d1d1;
+  --color-border-subtle: #e0e0e0;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+  --color-shadow-md: rgba(0, 0, 0, 0.1);
+
+  --color-accent: #005fb8;
+  --color-accent-hover: #003e92;
+
+  --color-editor-bg: #ffffff;
+  --color-editor-text: #171717;
+  --color-editor-gutter: #ffffff;
+  --color-editor-gutter-text: #999999;
+  --color-editor-active-line: rgba(0, 95, 184, 0.06);
+  --color-editor-tooltip: #ffffff;
+
+  --color-preview-code-bg: #f3f3f3;
+  --color-preview-code-text: #171717;
+
+  --color-statusbar-bg: #005fb8;
+  --color-statusbar-border: #d1d1d1;
+
+  --color-sidebar-bg: #ffffff;
+  --color-sidebar-active: #e8e8e8;
+
+  --color-toolbar-bg: #ffffff;
+  --color-toolbar-border: #d1d1d1;
+
+  --color-overlay: rgba(0, 0, 0, 0.25);
+
+  --color-selection: rgba(0, 95, 184, 0.25);
+
+  --shadow-titlebar: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-sidebar: 1px 0 4px rgba(0, 0, 0, 0.04);
+  --shadow-statusbar: 0 -1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-panel: 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+  --color-btn-icon: #424242;
+  --color-btn-icon-hover: #171717;
+  --color-btn-icon-active: var(--color-accent);
+  --color-btn-icon-disabled: #bdbdbd;
+  --color-btn-bg-hover: rgba(0, 0, 0, 0.04);
+  --color-error-text: #c42b1c;
+}
+
+/* ==================== Global Reset ==================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Segoe UI Variable", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  background: var(--acrylic-content-bg);
+  color: var(--color-ink);
+}
+
+::selection {
+  background: var(--color-selection);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-muted);
+  background-clip: content-box;
+  border: 3px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-slate);
+  background-clip: content-box;
+  border: 3px solid transparent;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  background: none;
+  outline: none;
+  font-size: inherit;
+  color: var(--color-btn-icon);
+}
+
+input,
+select {
+  font-family: inherit;
+  outline: none;
+}
+
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}

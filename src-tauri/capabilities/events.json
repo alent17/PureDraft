@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "events-capability",
+  "description": "Event system and app lifecycle",
+  "windows": ["main"],
+  "permissions": [
+    "core:event:default",
+    "core:app:default"
+  ]
+}
