@@ -6,6 +6,13 @@ export type Mode = "dark" | "light";
 export type AutoSaveInterval = "off" | "10" | "30" | "60" | "120";
 export type SyncStatus = "idle" | "syncing" | "error";
 
+export interface CustomFont {
+  name: string;
+  dataUrl: string;
+}
+
+const DEFAULT_FONT_FAMILY = "'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace";
+
 function createUiStore() {
   const activeTab = writable<ActiveTab>("edit");
   const savedSidebar = typeof localStorage !== 'undefined' ? localStorage.getItem('puredraft_sidebar') : null;
@@ -30,7 +37,21 @@ function createUiStore() {
   const typewriterMode = writable<boolean>(false);
   const paragraphFocus = writable<boolean>(false);
   const autoSaveInterval = writable<AutoSaveInterval>("30");
-  const fontSize = writable<number>(14);
+  const savedFontSize = typeof localStorage !== 'undefined' ? localStorage.getItem('puredraft_fontSize') : null;
+  const fontSize = writable<number>(savedFontSize ? parseInt(savedFontSize) : 14);
+  fontSize.subscribe(v => {
+    if (typeof localStorage !== 'undefined') localStorage.setItem('puredraft_fontSize', String(v));
+  });
+  const savedFontFamily = typeof localStorage !== 'undefined' ? localStorage.getItem('puredraft_fontFamily') : null;
+  const fontFamily = writable<string>(savedFontFamily || DEFAULT_FONT_FAMILY);
+  fontFamily.subscribe(v => {
+    if (typeof localStorage !== 'undefined') localStorage.setItem('puredraft_fontFamily', v);
+  });
+  const savedCustomFonts = typeof localStorage !== 'undefined' ? localStorage.getItem('puredraft_customFonts') : null;
+  const customFonts = writable<CustomFont[]>(savedCustomFonts ? JSON.parse(savedCustomFonts) : []);
+  customFonts.subscribe(v => {
+    if (typeof localStorage !== 'undefined') localStorage.setItem('puredraft_customFonts', JSON.stringify(v));
+  });
   const saveSlotsOpen = writable<boolean>(false);
 
   return {
@@ -50,6 +71,8 @@ function createUiStore() {
     paragraphFocus,
     autoSaveInterval,
     fontSize,
+    fontFamily,
+    customFonts,
     saveSlotsOpen,
 
     toggleSidebar() {
@@ -95,4 +118,6 @@ export const typewriterMode = uiStore.typewriterMode;
 export const paragraphFocus = uiStore.paragraphFocus;
 export const autoSaveInterval = uiStore.autoSaveInterval;
 export const fontSize = uiStore.fontSize;
+export const fontFamily = uiStore.fontFamily;
+export const customFonts = uiStore.customFonts;
 export const saveSlotsOpen = uiStore.saveSlotsOpen;

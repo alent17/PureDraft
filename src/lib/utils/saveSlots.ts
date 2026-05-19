@@ -126,6 +126,16 @@ export async function loadSaveSlotContent(slotPath: string): Promise<string | nu
   return result.content;
 }
 
+export function clearAllSaveSlots(filePath: string): void {
+  try {
+    const key = getStorageKey(filePath);
+    localStorage.removeItem(key);
+    console.log(`[SaveSlots] cleared all save slots for: ${filePath}`);
+  } catch {
+    // silently fail
+  }
+}
+
 export async function loadSaveSlot(
   filePath: string,
   slotId: number,

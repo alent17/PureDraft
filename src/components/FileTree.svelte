@@ -1,7 +1,8 @@
 <script lang="ts">
   import { currentFile } from '$lib/stores/file';
   import { sidebarTab } from '$lib/stores/ui';
-  import { getRecentFiles, type RecentFileEntry } from '$lib/utils/recentFiles';
+  import { getRecentFiles, removeRecentFile, clearRecentFiles, type RecentFileEntry } from '$lib/utils/recentFiles';
+  import { clearAllSaveSlots } from '$lib/utils/saveSlots';
   import { getFileType } from '$lib/utils/fileTypes';
   import Outcome from '$lib/components/Outline.svelte';
   import type { FileType } from '$lib/types';
@@ -38,6 +39,23 @@
       await onOpenRecentFile(entry.path, entry.name);
     }
     recentFiles = getRecentFiles();
+  }
+
+  function handleRemoveRecent(entry: RecentFileEntry, e: MouseEvent) {
+    e.stopPropagation();
+    removeRecentFile(entry.path);
+    clearAllSaveSlots(entry.path);
+    recentFiles = getRecentFiles();
+  }
+
+  function handleClearAllRecent() {
+    if (!window.confirm('确定要清空所有最近文件记录吗？关联的存档也将被清除。')) return;
+    const all = getRecentFiles();
+    for (const entry of all) {
+      clearAllSaveSlots(entry.path);
+    }
+    clearRecentFiles();
+    recentFiles = [];
   }
 
   function getFileIconColor(ft: string): string {
@@ -102,15 +120,28 @@
     {#if recentFiles.length > 0}
       <div class="section-header">
         <span class="section-title">最近打开</span>
+        <button class="clear-all-btn" onclick={handleClearAllRecent} title="清空所有最近文件">
+          全部清空
+        </button>
       </div>
       <div class="section-content">
         {#each recentFiles as entry}
-          <button class="file-item" onclick={() => handleRecentClick(entry)}>
+          <div class="file-item" onclick={() => handleRecentClick(entry)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter') handleRecentClick(entry); }}>
             <span class="file-icon file-icon-colored" style="background: {getFileIconColor(getFileType(entry.name))}">
               {getFileIcon(getFileType(entry.name))}
             </span>
             <span class="file-name" title={entry.path}>{entry.name}</span>
-          </button>
+            <button
+              class="file-item-delete"
+              onclick={(e) => handleRemoveRecent(entry, e)}
+              title="从最近文件中移除"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
         {/each}
       </div>
     {:else}
@@ -187,6 +218,19 @@
     letter-spacing: 0.5px;
   }
 
+  .clear-all-btn {
+    font-size: 10px;
+    color: var(--color-slate);
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 120ms ease, background 120ms ease;
+  }
+
+  .clear-all-btn:hover {
+    color: #e5534b;
+    background: rgba(229, 83, 75, 0.08);
+  }
+
   .section-content {
     flex: 1;
     overflow-y: auto;
@@ -202,6 +246,7 @@
     text-align: left;
     color: var(--color-ink);
     font-size: 12px;
+    cursor: pointer;
     transition: background 100ms ease;
     animation: fileItemIn 180ms ease-out;
   }
@@ -215,6 +260,29 @@
     background: var(--color-btn-bg-hover);
   }
 
+  .file-item-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+    opacity: 0;
+    color: var(--color-slate);
+    transition: opacity 120ms ease, color 120ms ease, background 120ms ease;
+  }
+
+  .file-item:hover .file-item-delete {
+    opacity: 1;
+  }
+
+  .file-item-delete:hover {
+    color: #e5534b;
+    background: rgba(229, 83, 75, 0.12);
+  }
+
   .file-icon {
     display: flex;
     align-items: center;
@@ -222,7 +290,7 @@
     width: 22px;
     height: 22px;
     border-radius: 5px;
-    font-family: var(--font-mono);
+    font-family: "Segoe UI Variable", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
     font-size: 8px;
     font-weight: 700;
     color: #ffffff;

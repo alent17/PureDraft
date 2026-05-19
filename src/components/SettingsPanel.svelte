@@ -1,7 +1,62 @@
 <script lang="ts">
-  import { mode, settingsOpen, autoSaveInterval, scrollSyncEnabled, focusMode, acrylicEnabled } from '$lib/stores/ui';
+  import { mode, settingsOpen, autoSaveInterval, scrollSyncEnabled, focusMode, acrylicEnabled, fontSize, fontFamily, customFonts } from '$lib/stores/ui';
   import type { AutoSaveInterval } from '$lib/stores/ui';
   import { setAcrylicEffect } from '$lib/api/window';
+  import { selectFontFile } from '$lib/utils/fontLoader';
+  import { loadCustomFonts } from '$lib/utils/fontLoader';
+
+  const PRESET_FONTS = [
+    { label: 'Cascadia Code', value: "'Cascadia Code', monospace" },
+    { label: 'JetBrains Mono', value: "'JetBrains Mono', monospace" },
+    { label: 'Fira Code', value: "'Fira Code', monospace" },
+    { label: 'Consolas', value: "Consolas, monospace" },
+    { label: 'Source Code Pro', value: "'Source Code Pro', monospace" },
+    { label: 'monospace', value: 'monospace' },
+  ];
+
+  function extractFontName(family: string): string {
+    for (const pf of PRESET_FONTS) {
+      if (family === pf.value) return pf.label;
+    }
+    return family.split(',')[0].trim().replace(/'/g, '');
+  }
+
+  let currentFontName = $state(extractFontName($fontFamily));
+
+  function handleFontPreset(fontValue: string, fontLabel: string) {
+    fontFamily.set(fontValue);
+    currentFontName = fontLabel;
+  }
+
+  function handleUploadFont() {
+    selectFontFile().then((font) => {
+      if (!font) return;
+      const exists = $customFonts.some(f => f.name === font.name);
+      if (exists) {
+        alert('该字体已存在');
+        return;
+      }
+      if ($customFonts.length >= 5) {
+        alert('最多只能上传 5 个自定义字体');
+        return;
+      }
+      customFonts.update(fonts => [...fonts, font]);
+      loadCustomFonts([...$customFonts, font]);
+      const fontValue = `'${font.name}', monospace`;
+      fontFamily.set(fontValue);
+      currentFontName = font.name;
+    });
+  }
+
+  function handleRemoveCustomFont(fontNameToRemove: string) {
+    const wasCurrent = currentFontName === fontNameToRemove;
+    customFonts.update(fonts => fonts.filter(f => f.name !== fontNameToRemove));
+    loadCustomFonts($customFonts.filter(f => f.name !== fontNameToRemove));
+    if (wasCurrent) {
+      fontFamily.set(PRESET_FONTS[0].value);
+      currentFontName = PRESET_FONTS[0].label;
+    }
+  }
 
   async function handleAcrylicToggle() {
     const newValue = !$acrylicEnabled;
@@ -137,6 +192,69 @@
             {$acrylicEnabled ? '开启' : '关闭'}
           </button>
         </div>
+      </div>
+
+      <!-- Font Settings -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">字体</span>
+          <span class="setting-desc">编辑器字体设置</span>
+        </div>
+        <div class="toggle-group">
+          {#each PRESET_FONTS as font}
+            <button
+              class="toggle-btn"
+              class:active={currentFontName === font.label}
+              onclick={() => handleFontPreset(font.value, font.label)}
+            >
+              {font.label}
+            </button>
+          {/each}
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">字体大小</span>
+          <span class="setting-desc">当前: {$fontSize}px</span>
+        </div>
+        <div class="toggle-group">
+          <input
+            type="range"
+            min="12"
+            max="32"
+            value={$fontSize}
+            oninput={(e) => fontSize.set(Number(e.currentTarget.value))}
+          />
+          <span class="font-size-value">{$fontSize}px</span>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">自定义字体</span>
+          <span class="setting-desc">上传自定义字体 (最多 5 个)</span>
+        </div>
+        <div class="toggle-group">
+          <button class="toggle-btn" onclick={handleUploadFont}>
+            + 上传字体
+          </button>
+        </div>
+        {#if $customFonts.length > 0}
+          <div class="custom-fonts-list">
+            {#each $customFonts as font}
+              <div class="custom-font-item">
+                <span>{font.name}</span>
+                <button class="remove-font-btn" onclick={() => handleRemoveCustomFont(font.name)} title="移除">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            {/each}
+          </div>
+        {/if}
       </div>
 
       <div class="setting-row">
@@ -305,5 +423,54 @@
 
   .shortcut-item span {
     margin-left: auto;
+  }
+
+  .font-size-value {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+    font-weight: 600;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  .custom-fonts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .custom-font-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--color-ink);
+  }
+
+  .remove-font-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    color: var(--color-slate);
+    transition: all 100ms ease;
+  }
+
+  .remove-font-btn:hover {
+    color: #e5534b;
+    background: rgba(229, 83, 75, 0.12);
+  }
+
+  input[type="range"] {
+    accent-color: var(--color-accent);
+    width: 120px;
   }
 </style>

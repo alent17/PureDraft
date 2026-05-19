@@ -50,3 +50,11 @@ export function removeRecentFile(path: string): void {
     // silent fail
   }
 }
+
+export function clearRecentFiles(): void {
+  try {
+    localStorage.removeItem(RECENT_KEY);
+  } catch {
+    // silent fail
+  }
+}

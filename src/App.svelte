@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import type { EditorView } from '@codemirror/view';
   import TitleBar from './components/TitleBar.svelte';
   import Toolbar from './components/Toolbar.svelte';
@@ -32,6 +32,7 @@
     syncStatus,
     focusMode,
     autoSaveInterval,
+    customFonts,
   } from '$lib/stores/ui';
   import { setAcrylicEffect } from '$lib/api/window';
   import { openFileDialog, readFile, saveFile, saveFileAs } from '$lib/utils/tauri';
@@ -43,6 +44,7 @@
   import { addRecentFile } from '$lib/utils/recentFiles';
   import { createSaveSlot, getSaveSlots } from '$lib/utils/saveSlots';
   import { ScrollSyncEngine, type ScrollState } from '$lib/utils/scrollSync';
+  import { loadCustomFonts } from '$lib/utils/fontLoader';
   import type { OpenFile, FileType } from '$lib/types';
 
   let dragOver = $state(false);
@@ -56,61 +58,21 @@
   let hoverEl = $state<HTMLDivElement | null>(null);
   let splitRatio = $state(0.5);
   let draggingSplit = $state(false);
-  let isProgrammaticScroll = false;
+  let isSyncingEditorTarget = false;
+  let isSyncingPreviewTarget = false;
+  let editorScrollEndTimer: ReturnType<typeof setTimeout> | null = null;
+  let previewScrollEndTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const syncEngine = new ScrollSyncEngine({ enabled: $scrollSyncEnabled, throttleMs: 16 });
+  const syncEngine = new ScrollSyncEngine({ enabled: $scrollSyncEnabled, throttleMs: 30 });
 
-  function syncScrollTo(
-    element: HTMLElement | null,
-    ratio: number,
-    label: string,
-  ): boolean {
-    if (!element) return false;
-    try {
-      const s: ScrollState = {
-        scrollTop: element.scrollTop,
-        scrollHeight: element.scrollHeight,
-        clientHeight: element.clientHeight,
-      };
-      const target = syncEngine.applyRatioToTarget(ratio, s);
-      isProgrammaticScroll = true;
-      element.scrollTo({ top: target, behavior: 'instant' });
-      requestAnimationFrame(() => { isProgrammaticScroll = false; });
-      return true;
-    } catch (err) {
-      console.warn(`Scroll sync to ${label} failed:`, err);
-      syncStatus.set('error');
-      setTimeout(() => {
-        if (syncEngine.isEnabled()) syncStatus.set('idle');
-      }, 3000);
-      return false;
-    }
+  function clearEditorSyncFlag() {
+    isSyncingEditorTarget = false;
+    if (editorScrollEndTimer) { clearTimeout(editorScrollEndTimer); editorScrollEndTimer = null; }
   }
 
-  function syncScrollToEditor(scrollDOM: HTMLElement, ratio: number): boolean {
-    try {
-      const s: ScrollState = {
-        scrollTop: scrollDOM.scrollTop,
-        scrollHeight: scrollDOM.scrollHeight,
-        clientHeight: scrollDOM.clientHeight,
-      };
-      const target = syncEngine.applyRatioToTarget(ratio, s);
-      isProgrammaticScroll = true;
-      scrollDOM.style.scrollBehavior = 'smooth';
-      scrollDOM.scrollTo({ top: target, behavior: 'smooth' });
-      setTimeout(() => {
-        scrollDOM.style.scrollBehavior = '';
-        isProgrammaticScroll = false;
-      }, 300);
-      return true;
-    } catch (err) {
-      console.warn('Scroll sync to editor failed:', err);
-      syncStatus.set('error');
-      setTimeout(() => {
-        if (syncEngine.isEnabled()) syncStatus.set('idle');
-      }, 3000);
-      return false;
-    }
+  function clearPreviewSyncFlag() {
+    isSyncingPreviewTarget = false;
+    if (previewScrollEndTimer) { clearTimeout(previewScrollEndTimer); previewScrollEndTimer = null; }
   }
 
   $effect(() => {
@@ -124,6 +86,10 @@
 
   $effect(() => {
     syncEngine.updateConfig({ enabled: $scrollSyncEnabled });
+  });
+
+  $effect(() => {
+    loadCustomFonts($customFonts);
   });
 
   $effect(() => {
@@ -193,37 +159,93 @@
   }
 
   function handleEditorScroll(scrollTop: number, scrollHeight: number, clientHeight: number) {
-    if (isProgrammaticScroll) return;
+    if (isSyncingEditorTarget) return;
     const inSplitOrEdit = $activeTab === 'edit' || $activeTab === 'split';
     if (!inSplitOrEdit) return;
+
     const state: ScrollState = { scrollTop, scrollHeight, clientHeight };
     const ratio = syncEngine.onEditorScroll(state);
     if (ratio === null) return;
 
-    syncScrollTo(previewEl, ratio, 'preview');
-    syncScrollTo(hoverEl, ratio, 'hover');
+    if (previewEl) {
+      clearPreviewSyncFlag();
+      const target = syncEngine.applyRatioToTarget(ratio, {
+        scrollTop: previewEl.scrollTop,
+        scrollHeight: previewEl.scrollHeight,
+        clientHeight: previewEl.clientHeight,
+      });
+      isSyncingPreviewTarget = true;
+      previewEl.scrollTop = target;
+      previewScrollEndTimer = setTimeout(clearPreviewSyncFlag, 300);
+    }
+
+    if (hoverEl) {
+      const target = syncEngine.applyRatioToTarget(ratio, {
+        scrollTop: hoverEl.scrollTop,
+        scrollHeight: hoverEl.scrollHeight,
+        clientHeight: hoverEl.clientHeight,
+      });
+      hoverEl.scrollTop = target;
+    }
   }
 
   function handlePreviewScroll(scrollTop: number, scrollHeight: number, clientHeight: number) {
-    if (isProgrammaticScroll) return;
+    if (isSyncingPreviewTarget) return;
     const inSplitOrPreview = $activeTab === 'preview' || $activeTab === 'split';
     if (!inSplitOrPreview) return;
+
     const state: ScrollState = { scrollTop, scrollHeight, clientHeight };
     const ratio = syncEngine.onPreviewScroll(state);
     if (ratio === null) return;
 
-    if (editorView) syncScrollToEditor(editorView.scrollDOM, ratio);
-    syncScrollTo(hoverEl, ratio, 'hover');
+    if (editorView?.scrollDOM) {
+      clearEditorSyncFlag();
+      const target = syncEngine.applyRatioToTarget(ratio, {
+        scrollTop: editorView.scrollDOM.scrollTop,
+        scrollHeight: editorView.scrollDOM.scrollHeight,
+        clientHeight: editorView.scrollDOM.clientHeight,
+      });
+      isSyncingEditorTarget = true;
+      editorView.scrollDOM.scrollTop = target;
+      editorScrollEndTimer = setTimeout(clearEditorSyncFlag, 300);
+    }
+
+    if (hoverEl) {
+      const target = syncEngine.applyRatioToTarget(ratio, {
+        scrollTop: hoverEl.scrollTop,
+        scrollHeight: hoverEl.scrollHeight,
+        clientHeight: hoverEl.clientHeight,
+      });
+      hoverEl.scrollTop = target;
+    }
   }
 
   function handleHoverScroll(scrollTop: number, scrollHeight: number, clientHeight: number) {
-    if (isProgrammaticScroll) return;
+    if (isSyncingPreviewTarget) return;
     const state: ScrollState = { scrollTop, scrollHeight, clientHeight };
     const ratio = syncEngine.onHoverScroll(state);
     if (ratio === null) return;
 
-    if (editorView) syncScrollToEditor(editorView.scrollDOM, ratio);
-    syncScrollTo(previewEl, ratio, 'preview');
+    if (editorView?.scrollDOM) {
+      clearEditorSyncFlag();
+      const target = syncEngine.applyRatioToTarget(ratio, {
+        scrollTop: editorView.scrollDOM.scrollTop,
+        scrollHeight: editorView.scrollDOM.scrollHeight,
+        clientHeight: editorView.scrollDOM.clientHeight,
+      });
+      isSyncingEditorTarget = true;
+      editorView.scrollDOM.scrollTop = target;
+      editorScrollEndTimer = setTimeout(clearEditorSyncFlag, 300);
+    }
+
+    if (previewEl) {
+      const target = syncEngine.applyRatioToTarget(ratio, {
+        scrollTop: previewEl.scrollTop,
+        scrollHeight: previewEl.scrollHeight,
+        clientHeight: previewEl.clientHeight,
+      });
+      previewEl.scrollTop = target;
+    }
   }
 
   async function handleOpenFiles() {
@@ -554,6 +576,8 @@
     });
     window.addEventListener('mouseup', () => { draggingSplit = false; });
     return () => {
+      clearEditorSyncFlag();
+      clearPreviewSyncFlag();
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('beforeunload', () => saveState());
       document.removeEventListener('paste', handlePaste);

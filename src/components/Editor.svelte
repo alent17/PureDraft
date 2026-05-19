@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { EditorView, keymap, lineNumbers } from '@codemirror/view';
+  import { keymap, EditorView, lineNumbers } from '@codemirror/view';
   import { EditorState, Compartment } from '@codemirror/state';
   import { basicSetup } from 'codemirror';
   import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
@@ -9,7 +9,7 @@
   import { tags } from '@lezer/highlight';
   import type { FileType } from '$lib/types';
   import { getLanguageExtension } from '$lib/utils/fileTypes';
-  import { mode, acrylicEnabled } from '$lib/stores/ui';
+  import { mode, acrylicEnabled, fontSize, fontFamily } from '$lib/stores/ui';
   import SearchBar from './SearchBar.svelte';
   import { setSearchResults, createSearchHighlightExtension, searchTheme } from '$lib/utils/search';
 
@@ -44,8 +44,10 @@
   const darkCM = EditorView.theme({
     '&': { backgroundColor: '#1F1F1F', color: '#D4D4D4', height: '100%' },
     '.cm-scroller': {
-      fontFamily: "'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace",
-      fontSize: '14px', lineHeight: '1.6', overflow: 'auto',
+      fontFamily: 'var(--editor-font-family)',
+      fontSize: 'var(--editor-font-size)',
+      lineHeight: '1.6', overflow: 'auto',
+      scrollBehavior: 'smooth',
     },
     '.cm-content': { caretColor: '#60CDFF', padding: '8px 0' },
     '.cm-cursor, .cm-dropCursor': { borderLeftColor: '#60CDFF', borderLeftWidth: '2px' },
@@ -68,8 +70,10 @@
   const lightCM = EditorView.theme({
     '&': { backgroundColor: '#FFFFFF', color: '#171717', height: '100%' },
     '.cm-scroller': {
-      fontFamily: "'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace",
-      fontSize: '14px', lineHeight: '1.6', overflow: 'auto',
+      fontFamily: 'var(--editor-font-family)',
+      fontSize: 'var(--editor-font-size)',
+      lineHeight: '1.6', overflow: 'auto',
+      scrollBehavior: 'smooth',
     },
     '.cm-content': { caretColor: '#005FB8', padding: '8px 0' },
     '.cm-cursor, .cm-dropCursor': { borderLeftColor: '#005FB8', borderLeftWidth: '2px' },
@@ -233,6 +237,7 @@
 
     view = new EditorView({ state, parent: container });
     editorViewRef = view;
+    view.scrollDOM.style.scrollBehavior = 'smooth';
 
     if (onScroll) {
       view.scrollDOM.addEventListener('scroll', () => {
@@ -262,6 +267,16 @@
       currentMode = m;
       view.dispatch({ effects: themeConf.reconfigure(getCMLightDark(m, $acrylicEnabled)) });
     }
+  });
+
+  $effect(() => {
+    const dom = view?.dom;
+    if (dom) {
+      dom.style.setProperty('--editor-font-family', $fontFamily);
+      dom.style.setProperty('--editor-font-size', `${$fontSize}px`);
+    }
+    document.documentElement.style.setProperty('--font-mono', $fontFamily);
+    document.documentElement.style.setProperty('--editor-font-size', `${$fontSize}px`);
   });
 
   $effect(() => {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sidebarOpen, mode, toolbarOpen, settingsOpen, saveSlotsOpen } from '$lib/stores/ui';
+  import { sidebarOpen, mode, settingsOpen, saveSlotsOpen } from '$lib/stores/ui';
   import { currentFileIndex } from '$lib/stores/file';
 
   let { onOpen, onSave, onSaveAs, onNew }: {
@@ -22,13 +22,8 @@
   function toggleSettings() {
     settingsOpen.update(v => !v);
   }
-
-  function collapseToolbar() {
-    toolbarOpen.set(false);
-  }
 </script>
 
-{#if $toolbarOpen}
 <div class="toolbar">
   <div class="toolbar-group">
     <button class="toolbar-btn" onclick={onOpen} title="打开文件 (Ctrl+O)">
@@ -104,22 +99,7 @@
   </div>
 
   <div class="toolbar-spacer"></div>
-
-  <button class="toolbar-btn collapse-btn" onclick={collapseToolbar} title="折叠工具栏">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <polyline points="18 15 12 9 6 15"/>
-    </svg>
-  </button>
 </div>
-{:else}
-<div class="toolbar-collapsed">
-  <button class="toolbar-btn expand-btn" onclick={() => toolbarOpen.set(true)} title="展开工具栏">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
-  </button>
-</div>
-{/if}
 
 <style>
   .toolbar {
@@ -130,16 +110,6 @@
     border-bottom: 1px solid var(--color-toolbar-border);
     padding: 0 8px;
     gap: 2px;
-    flex-shrink: 0;
-  }
-
-  .toolbar-collapsed {
-    display: flex;
-    align-items: center;
-    height: 24px;
-    background: var(--acrylic-bg);
-    border-bottom: 1px solid var(--color-toolbar-border);
-    padding: 0 8px;
     flex-shrink: 0;
   }
 
