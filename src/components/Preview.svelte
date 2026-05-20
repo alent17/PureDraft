@@ -183,6 +183,32 @@
     });
   }
 
+  function attachLanguageLabels() {
+    if (!previewEl) return;
+    const pres = previewEl.querySelectorAll<HTMLElement>('pre:not(.mermaid)');
+    pres.forEach((pre) => {
+      if (pre.querySelector('.lang-label')) return;
+
+      const code = pre.querySelector('code');
+      if (!code) return;
+
+      const langClass = Array.from(code.classList).find(c => c.startsWith('language-'));
+      if (!langClass) return;
+
+      const lang = langClass.replace('language-', '');
+      if (!lang) return;
+
+      const label = document.createElement('span');
+      label.className = 'lang-label';
+      label.textContent = lang;
+
+      if (getComputedStyle(pre).position === 'static') {
+        pre.style.position = 'relative';
+      }
+      pre.appendChild(label);
+    });
+  }
+
   $effect.pre(() => {
     if (previewEl) {
       const max = previewEl.scrollHeight - previewEl.clientHeight;
@@ -197,6 +223,7 @@
         initKaTeX();
         attachTaskHandlers();
         attachCopyButtons();
+        attachLanguageLabels();
       });
     }
   });
@@ -632,5 +659,23 @@
   .preview :global(.copy-btn:hover) {
     color: var(--color-btn-icon-hover);
     background: var(--color-btn-bg-hover);
+  }
+
+  .preview :global(.lang-label) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--color-slate);
+    background: var(--color-border);
+    border-bottom-right-radius: 4px;
+    text-transform: lowercase;
+    letter-spacing: 0.3px;
+    line-height: 1.6;
+    pointer-events: none;
+    user-select: none;
   }
 </style>

@@ -40,9 +40,28 @@
   $effect(() => {
     const _ = safeHtml;
     const el = hoverEl;
-    if (!el || hoverSavedRatio <= 0) return;
-    queueMicrotask(() => {
+    if (!el) return;
+    requestAnimationFrame(() => {
       if (!el || !el.isConnected) return;
+      const pres = el.querySelectorAll<HTMLElement>('pre:not(.mermaid)');
+      pres.forEach((pre) => {
+        if (pre.querySelector('.hover-lang-label')) return;
+        const code = pre.querySelector('code');
+        if (!code) return;
+        const langClass = Array.from(code.classList).find(c => c.startsWith('language-'));
+        if (!langClass) return;
+        const lang = langClass.replace('language-', '');
+        if (!lang) return;
+        const label = document.createElement('span');
+        label.className = 'hover-lang-label';
+        label.textContent = lang;
+        if (getComputedStyle(pre).position === 'static') {
+          pre.style.position = 'relative';
+        }
+        pre.appendChild(label);
+      });
+
+      if (hoverSavedRatio <= 0) return;
       const max = el.scrollHeight - el.clientHeight;
       if (max > 0 && hoverSavedRatio > 0) {
         el.scrollTop = hoverSavedRatio * max;
@@ -180,4 +199,21 @@
   .hover-body :global(.mermaid-container) { margin: 0.4em 0; text-align: center; }
   .hover-body :global(.mermaid-container svg) { max-width: 100%; height: auto; }
   .hover-body :global(.katex-block) { margin: 0.4em 0; text-align: center; }
+  .hover-body :global(.hover-lang-label) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 1px 6px;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--color-slate);
+    background: var(--color-border);
+    border-bottom-right-radius: 3px;
+    text-transform: lowercase;
+    letter-spacing: 0.2px;
+    line-height: 1.6;
+    pointer-events: none;
+    user-select: none;
+  }
 </style>
