@@ -87,41 +87,41 @@
     bottom: auto;
   }
 
-  /* 暗色模式样式 */
+  /* 暗色模式样式 - 白色背景，黑色文字 */
   .tooltip-dark {
+    color: #1e1e1e;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .tooltip-dark .tooltip-text {
+    color: #1e1e1e;
+  }
+
+  .tooltip-dark .tooltip-shortcut {
+    color: #666;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  /* 浅色模式样式 - 黑色背景，白色文字 */
+  .tooltip-light {
     color: #ffffff;
     background: rgba(30, 30, 30, 0.94);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  .tooltip-dark .tooltip-text {
+  .tooltip-light .tooltip-text {
     color: #f0f0f0;
   }
 
-  .tooltip-dark .tooltip-shortcut {
+  .tooltip-light .tooltip-shortcut {
     color: #999;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  /* 浅色模式样式 */
-  .tooltip-light {
-    color: #1e1e1e;
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .tooltip-light .tooltip-text {
-    color: #1e1e1e;
-  }
-
-  .tooltip-light .tooltip-shortcut {
-    color: #666;
-    background: rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.08);
   }
 
   .tooltip-shortcut {
