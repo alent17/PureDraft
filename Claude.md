@@ -2,8 +2,17 @@
 
 ## 项目概述
 
-Tauri 2 桌面应用。Rust 后端 + Svelte 5 前端，通过 Tauri IPC 通信。包管理器 pnpm，构建工具 Vite。
+PureDraft — Tauri 2 桌面 Markdown 编辑器。Rust 后端 + Svelte 5 前端，通过 Tauri IPC 通信。包管理器 pnpm，构建工具 Vite。
+
 视觉与交互基调：Neo-Brutalism 与 Tech-wear 风格，追求极致的 120Hz 丝滑动画体验与物理弹簧反馈。
+
+## 核心设计理念
+
+本项目的 UI/UX 设计遵循三大核心原则：
+
+1. **内容优先 (Content-First)**：移除所有非必要的边框与强烈的视觉干扰，采用极简控件设计，使用户注意力始终聚焦在编辑与预览内容本身。
+2. **动态响应 (Fluidity)**：从流式 Markdown 渲染到各组件的状态切换，全程保持平滑过渡动效，杜绝生硬的闪烁、突变或页面重排（Reflow）。动画使用 `svelte/motion` 的 spring 物理曲线和 CSS `transform`。
+3. **层次分明 (Hierarchy)**：放弃传统的粗重分割线，转而依靠精细的留白（White space）和微妙的背景色差（Surface Tones）来区分不同的信息区块。
 
 ## 常用命令
 
@@ -72,6 +81,27 @@ Svelte 组件 → `$lib/api/*.ts` → Tauri invoke → Rust command → Rust ser
 - **service 层**：所有实际业务逻辑。返回 `Result<T, AppError>`。
 - **model 层**：纯数据结构，`#[derive(Serialize, Deserialize)]` + `#[serde(rename_all = "camelCase")]`。
 - **api 层**：TypeScript 对 Rust command 的一一映射封装，统一使用类似 Rust Result 的错误处理范式。
+
+## 视觉与排版规范
+
+### 色彩系统变量
+
+| CSS 变量                 | 设计作用                                     |
+| :----------------------- | :------------------------------------------- |
+| `--color-bg`             | 全局底层画布背景色                           |
+| `--color-bg-secondary`   | Surface 层 — 消息背景、卡片区块              |
+| `--color-ink`            | Text Primary — 主体文本、Markdown 正文、标题 |
+| `--color-text-secondary` | Text Secondary — 次要信息、标签、占位符      |
+| `--color-accent`         | 交互核心高亮、品牌色、链接、激活状态         |
+| `--color-border`         | 微妙的装饰线、输入框边框、代码块边界         |
+| `--color-slate`          | 置灰文本 — 时间戳、次级标签                  |
+| `--color-muted`          | 最低层级文本 — 禁用态                        |
+
+### 排版约束
+
+- **字体栈**：优先采用系统无衬线字体（Inter, system-ui, -apple-system, "Segoe UI", sans-serif）。代码块必须使用等宽字体（如 "Fira Code", "JetBrains Mono", monospace）。
+- **行高 (Line Height)**：正文及 Markdown 区域必须保持在 **1.6 到 1.75** 之间，确保大段文本具有极佳的易读性。
+- **黄金视口宽度**：核心内容区域最大宽度应限制在 **800px** 左右。过宽的文本行会导致人眼横向扫视距离过长，产生视觉疲劳。
 
 ## Rust 规范
 
@@ -282,14 +312,17 @@ export const settings = createSettingsStore();
 - 组件样式 scoped，全局样式只放 `app.css`。
 - BEM-like 命名：`block__element--modifier`。
 
-### 多窗口设计与 UI/UX 细节约束
+## 多窗口设计与 UI/UX 细节约束
 
-- **控制层分离**：诸如“关闭按钮”等操作性交互，必须放置在独立的浮动窗口 (Floating Window) 中，**严禁**将其整合进 Dynamic Island 面板。
+- **控制层分离**：诸如"关闭按钮"等操作性交互，必须放置在独立的浮动窗口 (Floating Window) 中，**严禁**将其整合进 Dynamic Island 面板。
 - **高保真动画优先**：重构或优化代码时，120Hz 动画的流畅度优先级高于代码精简。禁止提交会让动画变得跳跃、卡顿的布局或逻辑变更。优先使用 `svelte/motion` 的弹簧 (spring) 物理曲线和 CSS transform。
+- **避免滚动动画叠加**：在动态内容高频更新期间，滚动方法**绝对禁止**使用 CSS `behavior: 'smooth'`。因为平滑滚动约 200ms 动画周期在高频触发时会导致浏览器将数百个动画堆叠，CPU 阻塞、画面掉帧。应使用 `behavior: 'auto'` 瞬间跳转，在 120Hz 高刷屏上自然形成丝滑的"推挤"效果。
+- **新元素进入动效**：当新节点被推入 DOM 时，必须使用 CSS `transform: translateY` 实现进入动画。`transform` 不改变布局占位（Layout），可以在 DOM 生成瞬间精准计算高度，视觉层在 GPU 加速下平滑上浮。
 - **圆角规范**：UI 组件统一使用标准的圆角 (Standard Rounded Corner)，**严禁**在任何未明确说明的地方使用内凹（倒角/Inverted）圆角。
 - **音频频谱可视化**：实现音频频谱组件时，必须保持 6 根柱子，上下对称，且严格放置在歌曲信息的右侧。
+- **删除操作需确认**：所有不可逆的删除操作（文件移除、存档槽删除、自定义字体移除等）必须弹出确认提示，防止用户误操作。
 
-### 全局事件机制 (Rust 到 UI)
+## 全局事件机制 (Rust 到 UI)
 
 - 事件名 kebab-case：`file-changed`、`settings-updated`。
 - 监听必须在 `onDestroy` 中调用 `unlisten()` 取消（如果是在组件生命周期内注册）。
@@ -298,6 +331,20 @@ export const settings = createSettingsStore();
 | :------------------------ | :------------------ | :-------------------------- |
 | `get_file_list`           | `getFileList()`     | `file-system-changed`       |
 | `update_settings`         | `updateSettings()`  | `settings-updated`          |
+
+## 高性能渲染最佳实践
+
+### Markdown 解析与增量高亮
+
+- **局部增量解析**：仅对当前处于编辑/生成状态的最后一条内容进行动态解析，已完成的内容应缓存 HTML 结果，锁定 DOM，后续不再重复处理。
+- **轻量级工具链选用**：使用 `marked` 作为极速解析器，配合 `highlight.js` 按需引入常用语言包进行代码高亮。严禁引入体积庞大的 Shiki 等高级预渲染器。
+- **异步线程计算**：对于长文本或大量代码块的内容，将 Markdown 解析器放入 Web Worker 执行。主线程仅负责通过 `postMessage` 传递文本片段，Worker 在后台计算出干净的 HTML 后抛回主线程，确保主 UI 渲染线程绝对纯净。
+
+### 滚动性能
+
+- 滚动同步使用 `requestAnimationFrame` 接管节奏，配合 `throttleMs: 0` 完全交由浏览器原生重绘周期驱动，频率可达到 120Hz。
+- 移除所有 `Math.round` 取整，保留亚像素精度使滚动更丝滑。
+- 使用基于时间的"源锁定"（Active Source Locking）机制防止双向滚动中的乒乓效应。
 
 ## 安全
 

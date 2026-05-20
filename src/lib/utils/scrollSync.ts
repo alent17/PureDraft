@@ -21,7 +21,7 @@ export type SyncSource = 'editor' | 'preview' | 'hover' | 'none';
 const DEFAULT_CONFIG: SyncConfig = {
   enabled: true,
   ratio: 1,
-  throttleMs: 30,
+  throttleMs: 0,
 };
 
 export function computeRatio(
@@ -36,23 +36,22 @@ export function computeRatio(
 export function clampScrollTop(ratio: number, state: ScrollState): number {
   const maxScroll = state.scrollHeight - state.clientHeight;
   if (maxScroll <= 0) return 0;
-  return Math.round(Math.max(0, Math.min(maxScroll, ratio * maxScroll)));
+  return Math.max(0, Math.min(maxScroll, ratio * maxScroll));
 }
 
 export function clampScrollLeft(ratio: number, state: HorizontalScrollState): number {
   const maxScroll = state.scrollWidth - state.clientWidth;
   if (maxScroll <= 0) return 0;
-  return Math.round(Math.max(0, Math.min(maxScroll, ratio * maxScroll)));
+  return Math.max(0, Math.min(maxScroll, ratio * maxScroll));
 }
 
 export class ScrollSyncEngine {
   private config: SyncConfig;
-  private lastSource: SyncSource = 'none';
-  private lastSyncTime = 0;
-  private pendingRaf: number | null = null;
+  private activeSource: SyncSource = 'none';
+  private lockTimer: number | null = null;
 
   constructor(config?: Partial<SyncConfig>) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...DEFAULT_CONFIG, ...config, throttleMs: 0 };
   }
 
   updateConfig(partial: Partial<SyncConfig>): void {
@@ -64,11 +63,10 @@ export class ScrollSyncEngine {
   }
 
   reset(): void {
-    this.lastSource = 'none';
-    this.lastSyncTime = 0;
-    if (this.pendingRaf !== null) {
-      cancelAnimationFrame(this.pendingRaf);
-      this.pendingRaf = null;
+    this.activeSource = 'none';
+    if (this.lockTimer !== null) {
+      window.clearTimeout(this.lockTimer);
+      this.lockTimer = null;
     }
   }
 
@@ -78,7 +76,6 @@ export class ScrollSyncEngine {
 
     const maxScroll = state.scrollHeight - state.clientHeight;
     if (maxScroll <= 0) {
-      this.releaseSync();
       return null;
     }
 
@@ -94,7 +91,6 @@ export class ScrollSyncEngine {
 
     const maxScroll = state.scrollHeight - state.clientHeight;
     if (maxScroll <= 0) {
-      this.releaseSync();
       return null;
     }
 
@@ -110,7 +106,6 @@ export class ScrollSyncEngine {
 
     const maxScroll = state.scrollHeight - state.clientHeight;
     if (maxScroll <= 0) {
-      this.releaseSync();
       return null;
     }
 
@@ -126,7 +121,6 @@ export class ScrollSyncEngine {
 
     const maxScroll = state.scrollWidth - state.clientWidth;
     if (maxScroll <= 0) {
-      this.releaseSync();
       return null;
     }
 
@@ -142,7 +136,6 @@ export class ScrollSyncEngine {
 
     const maxScroll = state.scrollWidth - state.clientWidth;
     if (maxScroll <= 0) {
-      this.releaseSync();
       return null;
     }
 
@@ -165,33 +158,23 @@ export class ScrollSyncEngine {
   }
 
   private shouldSync(source: SyncSource): boolean {
-    if (this.lastSource === source) return false;
     if (source === 'none') return false;
 
-    const now = performance.now();
-    if (now - this.lastSyncTime < this.config.throttleMs) {
+    if (this.activeSource !== 'none' && this.activeSource !== source) {
       return false;
     }
 
-    this.lastSyncTime = now;
-    this.lastSource = source;
+    this.activeSource = source;
 
-    if (this.pendingRaf !== null) {
-      cancelAnimationFrame(this.pendingRaf);
+    if (this.lockTimer !== null) {
+      window.clearTimeout(this.lockTimer);
     }
-    this.pendingRaf = requestAnimationFrame(() => {
-      this.lastSource = 'none';
-      this.pendingRaf = null;
-    });
+
+    this.lockTimer = window.setTimeout(() => {
+      this.activeSource = 'none';
+      this.lockTimer = null;
+    }, 50);
 
     return true;
-  }
-
-  private releaseSync(): void {
-    if (this.pendingRaf !== null) {
-      cancelAnimationFrame(this.pendingRaf);
-      this.pendingRaf = null;
-    }
-    this.lastSource = 'none';
   }
 }

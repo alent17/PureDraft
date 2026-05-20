@@ -49,6 +49,7 @@
   }
 
   function handleRemoveCustomFont(fontNameToRemove: string) {
+    if (!window.confirm(`确定要移除自定义字体 "${fontNameToRemove}" 吗？`)) return;
     const wasCurrent = currentFontName === fontNameToRemove;
     customFonts.update(fonts => fonts.filter(f => f.name !== fontNameToRemove));
     loadCustomFonts($customFonts.filter(f => f.name !== fontNameToRemove));

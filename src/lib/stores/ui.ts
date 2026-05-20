@@ -11,6 +11,16 @@ export interface CustomFont {
   dataUrl: string;
 }
 
+export interface ConfirmDialogConfig {
+  title: string;
+  message: string;
+  danger?: boolean;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
 const DEFAULT_FONT_FAMILY = "'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace";
 
 function createUiStore() {
@@ -53,6 +63,8 @@ function createUiStore() {
     if (typeof localStorage !== 'undefined') localStorage.setItem('puredraft_customFonts', JSON.stringify(v));
   });
   const saveSlotsOpen = writable<boolean>(false);
+  const confirmDialogOpen = writable<boolean>(false);
+  const confirmDialogConfig = writable<ConfirmDialogConfig | null>(null);
 
   return {
     activeTab,
@@ -74,6 +86,18 @@ function createUiStore() {
     fontFamily,
     customFonts,
     saveSlotsOpen,
+    confirmDialogOpen,
+    confirmDialogConfig,
+
+    openConfirmDialog(config: ConfirmDialogConfig) {
+      confirmDialogConfig.set(config);
+      confirmDialogOpen.set(true);
+    },
+
+    closeConfirmDialog() {
+      confirmDialogOpen.set(false);
+      confirmDialogConfig.set(null);
+    },
 
     toggleSidebar() {
       sidebarOpen.update((v) => !v);
@@ -121,3 +145,7 @@ export const fontSize = uiStore.fontSize;
 export const fontFamily = uiStore.fontFamily;
 export const customFonts = uiStore.customFonts;
 export const saveSlotsOpen = uiStore.saveSlotsOpen;
+export const confirmDialogOpen = uiStore.confirmDialogOpen;
+export const confirmDialogConfig = uiStore.confirmDialogConfig;
+export const openConfirmDialog = uiStore.openConfirmDialog;
+export const closeConfirmDialog = uiStore.closeConfirmDialog;

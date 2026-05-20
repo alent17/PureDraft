@@ -50,6 +50,7 @@
   }
 
   async function handleDelete(slotId: number) {
+    if (!window.confirm('确定要删除此存档吗？此操作不可撤销。')) return;
     const file = $currentFile;
     if (!file?.path) return;
     await deleteSaveSlot(file.path, slotId);

@@ -47,7 +47,6 @@
       fontFamily: 'var(--editor-font-family)',
       fontSize: 'var(--editor-font-size)',
       lineHeight: '1.6', overflow: 'auto',
-      scrollBehavior: 'smooth',
     },
     '.cm-content': { caretColor: '#60CDFF', padding: '8px 0' },
     '.cm-cursor, .cm-dropCursor': { borderLeftColor: '#60CDFF', borderLeftWidth: '2px' },
@@ -73,7 +72,6 @@
       fontFamily: 'var(--editor-font-family)',
       fontSize: 'var(--editor-font-size)',
       lineHeight: '1.6', overflow: 'auto',
-      scrollBehavior: 'smooth',
     },
     '.cm-content': { caretColor: '#005FB8', padding: '8px 0' },
     '.cm-cursor, .cm-dropCursor': { borderLeftColor: '#005FB8', borderLeftWidth: '2px' },
@@ -237,7 +235,6 @@
 
     view = new EditorView({ state, parent: container });
     editorViewRef = view;
-    view.scrollDOM.style.scrollBehavior = 'smooth';
 
     if (onScroll) {
       view.scrollDOM.addEventListener('scroll', () => {

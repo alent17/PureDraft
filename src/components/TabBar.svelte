@@ -66,7 +66,7 @@
       class="action-btn"
       class:active={$scrollSyncEnabled}
       onclick={toggleScrollSync}
-      title="滚动同步"
+      aria-label="滚动同步"
     >
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="17 1 21 5 17 9"/>

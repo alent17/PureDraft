@@ -15,6 +15,7 @@ import go from "highlight.js/lib/languages/go";
 import yaml from "highlight.js/lib/languages/yaml";
 import sql from "highlight.js/lib/languages/sql";
 import markdown from "highlight.js/lib/languages/markdown";
+import katex from "katex";
 import hljsDarkTheme from "highlight.js/styles/atom-one-dark.css?inline";
 import hljsLightTheme from "highlight.js/styles/github.css?inline";
 
@@ -64,7 +65,15 @@ export function processLatex(html: string): string {
 }
 
 function renderLatex(formula: string, displayMode: boolean): string {
-  return `<code>${escapeHtml(formula)}</code>`;
+  try {
+    return katex.renderToString(formula, {
+      displayMode,
+      throwOnError: false,
+      strict: false,
+    });
+  } catch {
+    return `<code>${escapeHtml(formula)}</code>`;
+  }
 }
 
 function escapeHtml(text: string): string {

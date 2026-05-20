@@ -12,3 +12,9 @@ target/
 # Ignore all target directories
 backend/target/
 src-tauri/target/
+
+# Ignore save slots
+.puredraft_saves/
+
+# Ignore trae documents
+.trae/documents/

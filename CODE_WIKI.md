@@ -7,6 +7,7 @@
 ## 技术栈
 
 ### 前端
+
 - **框架**: Svelte 5
 - **构建工具**: Vite 6
 - **编辑器**: CodeMirror 6
@@ -15,6 +16,7 @@
 - **测试**: Vitest
 
 ### 后端
+
 - **框架**: Tauri 2
 - **语言**: Rust
 - **依赖管理**: Cargo
@@ -115,12 +117,14 @@ Tauri App
 **文件路径**: [`src/lib/stores/file.ts`](file:///e:/Desktop/Projects/PureDraft/src/lib/stores/file.ts)
 
 **主要功能**:
+
 - 管理所有打开的文件列表
 - 跟踪当前活动文件
 - 维护文件内容、修改状态、光标位置等
 - 提供文件添加、关闭、切换等操作
 
 **核心 API**:
+
 - `addFile(file)`: 添加新文件
 - `closeFile(index)`: 关闭指定文件
 - `updateFileContent(index, content)`: 更新文件内容
@@ -132,6 +136,7 @@ Tauri App
 **文件路径**: [`src/lib/stores/ui.ts`](file:///e:/Desktop/Projects/PureDraft/src/lib/stores/ui.ts)
 
 **主要功能**:
+
 - 管理编辑器/预览/分屏模式
 - 管理深色/浅色主题
 - 管理侧边栏、工具栏显示状态
@@ -139,6 +144,7 @@ Tauri App
 - 管理自动保存间隔、字体大小等
 
 **核心状态**:
+
 - `activeTab`: 当前活动标签 ("edit" | "preview" | "split")
 - `mode`: 主题模式 ("dark" | "light")
 - `sidebarOpen`: 侧边栏是否打开
@@ -150,6 +156,7 @@ Tauri App
 **文件路径**: [`src/lib/utils/markdown.ts`](file:///e:/Desktop/Projects/PureDraft/src/lib/utils/markdown.ts)
 
 **主要功能**:
+
 - Markdown 解析和 HTML 渲染
 - 代码语法高亮（使用 Highlight.js）
 - LaTeX 公式支持
@@ -157,6 +164,7 @@ Tauri App
 - 深色/浅色主题切换
 
 **核心函数**:
+
 - `createMarkedInstance(mode)`: 创建 Markdown 解析器实例
 - `processLatex(html)`: 处理 LaTeX 公式
 - `processMermaid(html)`: 处理 Mermaid 图表
@@ -166,6 +174,7 @@ Tauri App
 **文件路径**: [`src/lib/utils/scrollSync.ts`](file:///e:/Desktop/Projects/PureDraft/src/lib/utils/scrollSync.ts)
 
 **主要功能**:
+
 - 实现编辑器和预览区域的滚动位置同步
 - 支持节流以提升性能
 - 处理编程式滚动和用户滚动的区分
@@ -175,12 +184,14 @@ Tauri App
 **文件路径**: [`src-tauri/src/services/file.rs`](file:///e:/Desktop/Projects/PureDraft/src-tauri/src/services/file.rs)
 
 **主要功能**:
+
 - 文件读取和写入
 - 文件对话框打开/保存
 - 文件夹浏览和文件树构建
 - 文件类型识别
 
 **核心方法**:
+
 - `read_file(path)`: 读取文件内容
 - `save_file(path, content)`: 保存文件
 - `open_file_dialog(app)`: 打开文件选择对话框
@@ -192,6 +203,7 @@ Tauri App
 **文件路径**: [`src-tauri/src/commands/file_ops.rs`](file:///e:/Desktop/Projects/PureDraft/src-tauri/src/commands/file_ops.rs)
 
 **主要功能**:
+
 - 暴露文件操作命令给前端调用
 - 使用 `#[tauri::command]` 宏标记可调用函数
 - 处理错误并返回结果
@@ -207,6 +219,7 @@ Tauri App
 **功能**: 管理编辑器、预览和悬浮预览之间的滚动同步
 
 **主要方法**:
+
 - `onEditorScroll(state)`: 处理编辑器滚动事件
 - `onPreviewScroll(state)`: 处理预览滚动事件
 - `onHoverScroll(state)`: 处理悬浮预览滚动事件
@@ -221,6 +234,7 @@ Tauri App
 **功能**: 提供所有文件相关的业务逻辑
 
 **主要方法**:
+
 - `read_file(&self, path: &str)`: 读取文件内容并识别文件类型
 - `save_file(&self, path: &str, content: &str)`: 保存文件到磁盘
 - `open_file_dialog(&self, app: &AppHandle)`: 显示文件选择对话框
@@ -230,43 +244,46 @@ Tauri App
 
 ### 前端主要依赖
 
-| 依赖包 | 版本 | 用途 |
-|--------|------|------|
-| @tauri-apps/api | ^2 | Tauri 前端 API |
-| @tauri-apps/plugin-dialog | ^2 | 对话框插件 |
-| codemirror | ^6 | 代码编辑器 |
-| marked | ^12 | Markdown 解析 |
-| highlight.js | ^11 | 代码语法高亮 |
-| dompurify | ^3 | HTML 清理 |
-| katex | ^0.16.46 | LaTeX 公式渲染 |
-| mermaid | ^11.15.0 | 图表生成 |
-| prettier | ^3.8.2 | 代码格式化 |
+| 依赖包                    | 版本     | 用途           |
+| ------------------------- | -------- | -------------- |
+| @tauri-apps/api           | ^2       | Tauri 前端 API |
+| @tauri-apps/plugin-dialog | ^2       | 对话框插件     |
+| codemirror                | ^6       | 代码编辑器     |
+| marked                    | ^12      | Markdown 解析  |
+| highlight.js              | ^11      | 代码语法高亮   |
+| dompurify                 | ^3       | HTML 清理      |
+| katex                     | ^0.16.46 | LaTeX 公式渲染 |
+| mermaid                   | ^11.15.0 | 图表生成       |
+| prettier                  | ^3.8.2   | 代码格式化     |
 
 ### 后端主要依赖
 
-| 依赖包 | 版本 | 用途 |
-|--------|------|------|
-| tauri | ^2 | Tauri 框架 |
-| tauri-plugin-dialog | 2 | 对话框插件 |
-| serde | ^1 | 序列化/反序列化 |
-| serde_json | 1 | JSON 处理 |
-| tracing | 0.1 | 日志记录 |
-| chrono | 0.4 | 时间处理 |
-| thiserror | 1 | 错误处理宏 |
+| 依赖包              | 版本 | 用途            |
+| ------------------- | ---- | --------------- |
+| tauri               | ^2   | Tauri 框架      |
+| tauri-plugin-dialog | 2    | 对话框插件      |
+| serde               | ^1   | 序列化/反序列化 |
+| serde_json          | 1    | JSON 处理       |
+| tracing             | 0.1  | 日志记录        |
+| chrono              | 0.4  | 时间处理        |
+| thiserror           | 1    | 错误处理宏      |
 
 ## 项目运行方式
 
 ### 开发环境
 
 1. **安装依赖**
+
    ```bash
    npm install
    ```
 
 2. **启动开发服务器**
+
    ```bash
    npm run tauri:dev
    ```
+
    这将同时启动 Vite 开发服务器和 Tauri 应用窗口。
 
 3. **仅启动前端开发服务器**
@@ -277,9 +294,11 @@ Tauri App
 ### 生产构建
 
 1. **构建应用**
+
    ```bash
    npm run tauri:build
    ```
+
    这将构建前端资源并打包成可执行文件。
 
 2. **仅构建前端**
@@ -289,19 +308,21 @@ Tauri App
 
 ### 其他命令
 
-| 命令 | 功能 |
-|------|------|
-| `npm run check` | 运行 Svelte 类型检查 |
-| `npm run lint` | 运行 Prettier 代码格式检查 |
-| `npm run format` | 运行 Prettier 格式化代码 |
+| 命令             | 功能                       |
+| ---------------- | -------------------------- |
+| `npm run check`  | 运行 Svelte 类型检查       |
+| `npm run lint`   | 运行 Prettier 代码格式检查 |
+| `npm run format` | 运行 Prettier 格式化代码   |
 
 ## 主要特性
 
 ### 1. 多语言编辑支持
+
 - 支持 Markdown、JavaScript、TypeScript、Python、Rust、Go、Java、C/C++、HTML、CSS、JSON、YAML 等多种语言
 - 基于 CodeMirror 6 的语法高亮
 
 ### 2. Markdown 实时预览
+
 - 分屏编辑/预览模式
 - 滚动位置同步
 - 代码语法高亮
@@ -309,6 +330,7 @@ Tauri App
 - Mermaid 图表支持
 
 ### 3. 用户界面特性
+
 - 自定义标题栏（无边框窗口）
 - 深色/浅色主题切换
 - Acrylic 毛玻璃特效（Windows）
@@ -317,6 +339,7 @@ Tauri App
 - 可拖拽调整的分屏比例
 
 ### 4. 文件管理
+
 - 多文件标签页
 - 最近文件记录
 - 保存槽功能
@@ -324,6 +347,7 @@ Tauri App
 - 拖拽文件打开
 
 ### 5. 编辑功能
+
 - 搜索和替换
 - 代码格式化（使用 Prettier）
 - Markdown 工具栏
@@ -333,6 +357,7 @@ Tauri App
 ## 数据流
 
 ### 打开文件流程
+
 1. 用户点击"打开文件"或使用快捷键 `Ctrl+O`
 2. 前端调用 `openFileDialog()` 函数
 3. 触发 Tauri 命令 `open_file_dialog`
@@ -342,6 +367,7 @@ Tauri App
 7. 更新 `currentFileIndex`，显示文件内容
 
 ### 保存文件流程
+
 1. 用户点击"保存"或使用快捷键 `Ctrl+S`
 2. 前端检查文件是否有路径
 3. 如果需要，格式化文件内容
@@ -350,6 +376,7 @@ Tauri App
 6. 前端标记文件为已保存
 
 ### 滚动同步流程
+
 1. 编辑器或预览区域发生滚动
 2. 触发相应的滚动事件处理函数
 3. `ScrollSyncEngine` 计算滚动比例
@@ -361,6 +388,7 @@ Tauri App
 ### Tauri 配置 (tauri.conf.json)
 
 **主要配置项**:
+
 - `productName`: 应用名称
 - `identifier`: 应用标识符
 - `windows`: 窗口配置（大小、标题、无边框等）
@@ -370,6 +398,7 @@ Tauri App
 ### 前端持久化配置
 
 部分 UI 状态通过 `localStorage` 持久化：
+
 - 侧边栏打开状态
 - Acrylic 特效启用状态
 
@@ -395,11 +424,13 @@ Tauri App
 项目使用 Vitest 进行测试，测试文件以 `.test.ts` 结尾。
 
 **运行测试**:
+
 ```bash
 npm test
 ```
 
 当前已有测试:
+
 - [`src/lib/utils/scrollSync.test.ts`](file:///e:/Desktop/Projects/PureDraft/src/lib/utils/scrollSync.test.ts): 滚动同步功能测试
 
 ## 注意事项

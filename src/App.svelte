@@ -13,6 +13,7 @@
   import SaveSlotPanel from './components/SaveSlotPanel.svelte';
   import MDToolbar from './lib/components/MDToolbar.svelte';
   import HoverPreview from './components/HoverPreview.svelte';
+  import ConfirmDialog from './lib/components/ConfirmDialog.svelte';
   import {
     openFiles,
     currentFileIndex,
@@ -33,6 +34,9 @@
     focusMode,
     autoSaveInterval,
     customFonts,
+    confirmDialogOpen,
+    confirmDialogConfig,
+    closeConfirmDialog,
   } from '$lib/stores/ui';
   import { setAcrylicEffect } from '$lib/api/window';
   import { openFileDialog, readFile, saveFile, saveFileAs } from '$lib/utils/tauri';
@@ -606,7 +610,7 @@
   {/if}
 
   <div class="main-area">
-    {#if !$focusMode && $sidebarOpen}
+    {#if !$focusMode}
       <div class="sidebar-panel" class:collapsed={!$sidebarOpen}>
         <FileTree
           onNavigateToLine={handleOutlineNavigate}
@@ -748,6 +752,18 @@
 <SettingsPanel />
 <SaveSlotPanel />
 
+{#if $confirmDialogOpen && $confirmDialogConfig}
+  <ConfirmDialog
+    title={$confirmDialogConfig.title}
+    message={$confirmDialogConfig.message}
+    danger={$confirmDialogConfig.danger || false}
+    confirmText={$confirmDialogConfig.confirmText || '确定'}
+    cancelText={$confirmDialogConfig.cancelText || '取消'}
+    onConfirm={$confirmDialogConfig.onConfirm}
+    onCancel={$confirmDialogConfig.onCancel}
+  />
+{/if}
+
 <style>
   .app {
     display: flex;
@@ -784,16 +800,21 @@
     flex-direction: column;
     z-index: 5;
     position: relative;
-    transition: width 250ms cubic-bezier(0.4, 0, 0.2, 1),
-                min-width 250ms cubic-bezier(0.4, 0, 0.2, 1),
-                border 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    transform: translateX(0);
   }
 
   .sidebar-panel.collapsed {
     width: 0;
     min-width: 0;
+    max-width: 0;
     border-right: none;
     box-shadow: none;
+    opacity: 0;
+    transform: translateX(-12px);
+    pointer-events: none;
   }
 
   .content-area {

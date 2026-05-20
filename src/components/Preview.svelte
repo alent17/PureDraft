@@ -383,7 +383,6 @@
     flex: 1;
     overflow-y: auto;
     overflow-anchor: none;
-    scroll-behavior: smooth;
     background: var(--acrylic-content-bg);
   }
 

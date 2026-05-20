@@ -30,35 +30,26 @@
     sidebarOpen.update(v => !v);
   }
 
-  function handleItemKeydown(e: KeyboardEvent, index: number) {
-    if (e.key === 'Enter') switchToFile(index);
-  }
-
   function handleCloseClick(e: MouseEvent, index: number) {
     e.stopPropagation();
+    const file = $openFiles[index];
+    if (!file) return;
+    if (!window.confirm(`确定要关闭 "${file.name}" 吗？未保存的更改将丢失。`)) return;
     closeFile(index);
   }
 </script>
 
 <div class="sidebar" class:collapsed={!$sidebarOpen}>
-  <div class="sidebar-header">
-    {#if $sidebarOpen}
-      <span class="sidebar-title">Files</span>
-      <span class="file-count">{$openFiles.length}</span>
-      <button class="collapse-btn" onclick={toggleSidebar} title="Collapse sidebar">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-      </button>
-    {:else}
-      <button class="collapse-btn" onclick={toggleSidebar} title="Expand sidebar">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </button>
-    {/if}
-  </div>
-  
+  <button class="collapse-btn" onclick={toggleSidebar} title={$sidebarOpen ? '收起侧边栏' : '展开侧边栏'}>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      {#if $sidebarOpen}
+        <polyline points="15 18 9 12 15 6"/>
+      {:else}
+        <polyline points="9 18 15 12 9 6"/>
+      {/if}
+    </svg>
+  </button>
+
   {#if $sidebarOpen}
     <div class="file-list">
       {#each $openFiles as file, i (file.path || i)}
@@ -67,23 +58,20 @@
           class:active={$currentFileIndex === i}
           role="button"
           tabindex="0"
+          title={file.path || file.name}
           onclick={() => switchToFile(i)}
-          onkeydown={(e) => handleItemKeydown(e, i)}
+          onkeydown={(e) => { if (e.key === 'Enter') switchToFile(i); }}
         >
           <span class="file-icon file-icon-colored" style="background: {getFileIconColor(file.name)}">{getFileIcon(file.name)}</span>
-          <span class="file-name" title={file.path || file.name}>
-            {file.name}
-            {#if file.isModified}
-              <span class="modified-dot"></span>
-            {/if}
-          </span>
-          <button class="file-close" onclick={(e) => handleCloseClick(e, i)} title="Close file">×</button>
+          {#if file.isModified}
+            <span class="modified-dot"></span>
+          {/if}
+          <button class="file-close" onclick={(e) => handleCloseClick(e, i)} title="关闭文件">×</button>
         </div>
       {/each}
       {#if $openFiles.length === 0}
         <div class="empty-state">
-          <p>No files</p>
-          <p class="hint">Ctrl+O to open</p>
+          <p></p>
         </div>
       {/if}
     </div>
@@ -106,88 +94,78 @@
 <style>
   .sidebar {
     width: var(--sidebar-width);
-    height: 100%;
-    background: var(--acrylic-sidebar-bg);
-    border-right: 1px solid var(--color-border);
+    height: calc(100% - var(--sidebar-margin) * 2);
+    margin: var(--sidebar-margin);
+    border-radius: var(--radius-pill);
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    gap: 4px;
     flex-shrink: 0;
     overflow: hidden;
-    transition: width 200ms ease;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .sidebar.collapsed {
     width: var(--sidebar-collapsed-width);
   }
 
-  .sidebar-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--color-border);
-    min-height: 41px;
-  }
-
-  .sidebar-title {
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--color-slate);
-  }
-
-  .file-count {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--color-slate);
-    background: var(--color-bg);
-    padding: 1px 7px;
-    border-radius: 10px;
-    border: 1px solid var(--color-border);
-    margin-left: auto;
-  }
-
   .collapse-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
     border-radius: var(--radius-sm);
-    color: var(--color-btn-icon);
+    color: #a0a0a0;
     transition: all 150ms ease;
     flex-shrink: 0;
+    margin-bottom: 4px;
   }
 
   .collapse-btn:hover {
-    background: var(--color-btn-bg-hover);
-    color: var(--color-btn-icon-hover);
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
   }
 
   .file-list {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
     overflow-y: auto;
-    padding: 4px;
+    padding: 0 4px;
   }
 
   .file-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 6px 8px;
-    border-radius: var(--radius-sm);
-    transition: background 120ms ease;
-    text-align: left;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    width: var(--sidebar-item-size);
+    height: var(--sidebar-item-size);
+    border-radius: var(--sidebar-item-radius);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    color: #a0a0a0;
   }
 
   .file-item:hover {
-    background: var(--color-sidebar-active);
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
   }
 
   .file-item.active {
-    background: var(--color-sidebar-active);
+    background: rgba(255, 255, 255, 0.12);
+    outline: 1px solid rgba(255, 255, 255, 0.15);
   }
 
   .file-icon {
@@ -212,37 +190,34 @@
     color: rgba(255, 255, 255, 0.85);
   }
 
-  .file-name {
-    font-size: 13px;
-    color: var(--color-ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
   .modified-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
     width: 6px;
     height: 6px;
     background: var(--color-accent);
     border-radius: 50%;
     flex-shrink: 0;
+    border: 1.5px solid rgba(30, 30, 30, 0.8);
   }
 
   .file-close {
     display: none;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-    font-size: 14px;
-    color: var(--color-btn-icon);
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 11px;
+    line-height: 1;
+    color: #ffffff;
+    background: rgba(229, 83, 75, 0.8);
     flex-shrink: 0;
     transition: all 120ms ease;
+    align-items: center;
+    justify-content: center;
   }
 
   .file-item:hover .file-close {
@@ -250,28 +225,20 @@
   }
 
   .file-close:hover {
-    background: var(--color-border);
-    color: var(--color-btn-icon-hover);
+    background: #e5534b;
+    transform: scale(1.1);
   }
 
   .empty-state {
-    padding: 24px 16px;
-    text-align: center;
-    color: var(--color-slate);
-    font-size: 13px;
-  }
-
-  .empty-state .hint {
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--color-steel);
+    width: 100%;
+    padding: 0;
   }
 
   .collapsed-list {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 8px 4px;
+    padding: 4px;
     gap: 4px;
   }
 
@@ -284,13 +251,16 @@
     border-radius: var(--radius-sm);
     transition: background 120ms ease;
     flex-shrink: 0;
+    color: #a0a0a0;
   }
 
   .collapsed-item:hover {
-    background: var(--color-sidebar-active);
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
   }
 
   .collapsed-item.active {
-    background: var(--color-sidebar-active);
+    background: rgba(255, 255, 255, 0.12);
+    outline: 1px solid rgba(255, 255, 255, 0.15);
   }
 </style>
