@@ -130,3 +130,11 @@ export function createMarkedInstance(mode: string = "dark") {
 
 export const markedInstance = createMarkedInstance("dark");
 markedInstance.use({ gfm: true, breaks: true });
+
+const renderer = {
+  checkbox(checked: boolean): string {
+    return `<input type="checkbox" class="task-list-item-checkbox" ${checked ? 'checked' : ''}>`;
+  }
+};
+
+markedInstance.use({ renderer });
