@@ -19,8 +19,6 @@
 
   let recentFiles = $state(getRecentFiles());
   let openMenuPath = $state<string | null>(null);
-  let menuPosition = $state({ x: 0, y: 0 });
-  let currentMenuEntry = $state<RecentFileEntry | null>(null);
 
   const PINNED_KEY = 'puredraft_pinned_files';
   function getPinnedFiles(): string[] {
@@ -70,22 +68,13 @@
     recentFiles = getRecentFiles();
   }
 
-  function toggleMenu(entry: RecentFileEntry, e: MouseEvent) {
+  function toggleMenu(path: string, e: MouseEvent) {
     e.stopPropagation();
-    if (openMenuPath === entry.path) {
-      openMenuPath = null;
-      currentMenuEntry = null;
-    } else {
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      menuPosition = { x: rect.right, y: rect.bottom };
-      openMenuPath = entry.path;
-      currentMenuEntry = entry;
-    }
+    openMenuPath = openMenuPath === path ? null : path;
   }
 
   function closeMenu() {
     openMenuPath = null;
-    currentMenuEntry = null;
   }
 
   function handlePinToggle(path: string) {
@@ -226,7 +215,7 @@
       {#if pinnedFiles.length > 0}
         <div class="section-content" role="presentation" onclick={handleDocumentClick} onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }}>
           {#each pinnedFiles as entry (entry.path)}
-            <div class="file-item" onclick={() => handleRecentClick(entry)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter') handleRecentClick(entry); }}>
+            <div class="file-item" class:menu-open={openMenuPath === entry.path} onclick={() => handleRecentClick(entry)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter') handleRecentClick(entry); }}>
               <span class="file-icon file-icon-colored" style="background: {getFileIconColor(getFileType(entry.name))}">
                 {getFileIcon(getFileType(entry.name))}
               </span>
@@ -241,7 +230,7 @@
               <button
                 class="file-item-menu"
                 class:active={openMenuPath === entry.path}
-                onclick={(e) => toggleMenu(entry, e)}
+                onclick={(e) => toggleMenu(entry.path, e)}
                 title="更多操作"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -250,6 +239,33 @@
                   <circle cx="12" cy="19" r="2"/>
                 </svg>
               </button>
+              {#if openMenuPath === entry.path}
+                <div class="dropdown-menu" role="presentation" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }}>
+                  <button class="dropdown-item" onclick={() => handleRenameRecent(entry)}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    重命名
+                  </button>
+                  <button class="dropdown-item" onclick={() => handlePinToggle(entry.path)}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+                    </svg>
+                    {pinnedPaths.includes(entry.path) ? '取消固定' : '固定'}
+                  </button>
+                  <div class="dropdown-divider"></div>
+                  <button class="dropdown-item dropdown-item-danger" onclick={() => handleDeleteRecent(entry)}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                      <line x1="10" y1="11" x2="10" y2="17"/>
+                      <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
+                    删除
+                  </button>
+                </div>
+              {/if}
             </div>
           {/each}
         </div>
@@ -263,7 +279,7 @@
         </div>
         <div class="section-content" role="presentation" onclick={handleDocumentClick} onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }}>
           {#each unpinnedFiles as entry (entry.path)}
-          <div class="file-item" onclick={() => handleRecentClick(entry)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter') handleRecentClick(entry); }}>
+          <div class="file-item" class:menu-open={openMenuPath === entry.path} onclick={() => handleRecentClick(entry)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter') handleRecentClick(entry); }}>
             <span class="file-icon file-icon-colored" style="background: {getFileIconColor(getFileType(entry.name))}">
               {getFileIcon(getFileType(entry.name))}
             </span>
@@ -278,7 +294,7 @@
             <button
               class="file-item-menu"
               class:active={openMenuPath === entry.path}
-              onclick={(e) => toggleMenu(entry, e)}
+              onclick={(e) => toggleMenu(entry.path, e)}
               title="更多操作"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -287,6 +303,33 @@
                 <circle cx="12" cy="19" r="2"/>
               </svg>
             </button>
+            {#if openMenuPath === entry.path}
+              <div class="dropdown-menu" role="presentation" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }}>
+                <button class="dropdown-item" onclick={() => handleRenameRecent(entry)}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  重命名
+                </button>
+                <button class="dropdown-item" onclick={() => handlePinToggle(entry.path)}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+                  </svg>
+                  {pinnedPaths.includes(entry.path) ? '取消固定' : '固定'}
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item dropdown-item-danger" onclick={() => handleDeleteRecent(entry)}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    <line x1="10" y1="11" x2="10" y2="17"/>
+                    <line x1="14" y1="11" x2="14" y2="17"/>
+                  </svg>
+                  删除
+                </button>
+              </div>
+            {/if}
           </div>
         {/each}
       </div>
@@ -299,40 +342,6 @@
     {/if}
   {/if}
 </div>
-
-{#if openMenuPath && currentMenuEntry}
-  <div 
-    class="dropdown-menu-fixed" 
-    role="presentation" 
-    onclick={(e) => e.stopPropagation()} 
-    onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }}
-    style="left: {menuPosition.x}px; top: {menuPosition.y}px;"
-  >
-    <button class="dropdown-item" onclick={() => handleRenameRecent(currentMenuEntry)}>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-      </svg>
-      重命名
-    </button>
-    <button class="dropdown-item" onclick={() => handlePinToggle(currentMenuEntry.path)}>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-      </svg>
-      {pinnedPaths.includes(currentMenuEntry.path) ? '取消固定' : '固定'}
-    </button>
-    <div class="dropdown-divider"></div>
-    <button class="dropdown-item dropdown-item-danger" onclick={() => handleDeleteRecent(currentMenuEntry)}>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="3 6 5 6 21 6"/>
-        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-        <line x1="10" y1="11" x2="10" y2="17"/>
-        <line x1="14" y1="11" x2="14" y2="17"/>
-      </svg>
-      删除
-    </button>
-  </div>
-{/if}
 
 <style>
   .panel {
@@ -415,6 +424,7 @@
   .section-content {
     flex: 1;
     overflow-y: auto;
+    overflow-x: visible;
     padding: 4px 0;
   }
 
@@ -436,6 +446,10 @@
     position: relative;
     overflow: visible;
     border: 1px solid transparent;
+  }
+
+  .file-item.menu-open {
+    z-index: 100;
   }
 
   @keyframes fileItemIn {
@@ -503,18 +517,6 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    padding: 4px;
-    animation: dropdownIn 120ms ease-out;
-  }
-
-  .dropdown-menu-fixed {
-    position: fixed;
-    z-index: 9999;
-    min-width: 130px;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
     padding: 4px;
     animation: dropdownIn 120ms ease-out;
   }
