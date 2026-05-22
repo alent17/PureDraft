@@ -1,6 +1,6 @@
 <script lang="ts">
   import { currentFile } from '$lib/stores/file';
-  import { sidebarTab, openConfirmDialog, closeConfirmDialog } from '$lib/stores/ui';
+  import { sidebarTab, openConfirmDialog, closeConfirmDialog, openRenameDialog, closeRenameDialog } from '$lib/stores/ui';
   import { getRecentFiles, removeRecentFile, clearRecentFiles, type RecentFileEntry } from '$lib/utils/recentFiles';
   import { clearAllSaveSlots } from '$lib/utils/saveSlots';
   import { getFileType } from '$lib/utils/fileTypes';
@@ -92,10 +92,21 @@
 
   function handleRenameRecent(entry: RecentFileEntry) {
     closeMenu();
-    const newName = window.prompt('重命名文件', entry.name);
-    if (!newName || newName === entry.name) return;
-    entry.name = newName;
-    recentFiles = getRecentFiles();
+    openRenameDialog({
+      title: '重命名文件',
+      defaultValue: entry.name,
+      placeholder: '请输入文件名',
+      onConfirm: (newName) => {
+        if (newName && newName !== entry.name) {
+          entry.name = newName;
+          recentFiles = getRecentFiles();
+        }
+        closeRenameDialog();
+      },
+      onCancel: () => {
+        closeRenameDialog();
+      }
+    });
   }
 
   function handleDeleteRecent(entry: RecentFileEntry) {

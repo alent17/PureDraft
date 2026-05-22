@@ -21,6 +21,16 @@ export interface ConfirmDialogConfig {
   onCancel?: () => void;
 }
 
+export interface RenameDialogConfig {
+  title?: string;
+  defaultValue?: string;
+  placeholder?: string;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm?: (value: string) => void;
+  onCancel?: () => void;
+}
+
 const DEFAULT_FONT_FAMILY = "'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace";
 
 function createUiStore() {
@@ -65,6 +75,8 @@ function createUiStore() {
   const saveSlotsOpen = writable<boolean>(false);
   const confirmDialogOpen = writable<boolean>(false);
   const confirmDialogConfig = writable<ConfirmDialogConfig | null>(null);
+  const renameDialogOpen = writable<boolean>(false);
+  const renameDialogConfig = writable<RenameDialogConfig | null>(null);
 
   return {
     activeTab,
@@ -88,6 +100,8 @@ function createUiStore() {
     saveSlotsOpen,
     confirmDialogOpen,
     confirmDialogConfig,
+    renameDialogOpen,
+    renameDialogConfig,
 
     openConfirmDialog(config: ConfirmDialogConfig) {
       confirmDialogConfig.set(config);
@@ -97,6 +111,16 @@ function createUiStore() {
     closeConfirmDialog() {
       confirmDialogOpen.set(false);
       confirmDialogConfig.set(null);
+    },
+
+    openRenameDialog(config: RenameDialogConfig) {
+      renameDialogConfig.set(config);
+      renameDialogOpen.set(true);
+    },
+
+    closeRenameDialog() {
+      renameDialogOpen.set(false);
+      renameDialogConfig.set(null);
     },
 
     toggleSidebar() {
@@ -147,5 +171,9 @@ export const customFonts = uiStore.customFonts;
 export const saveSlotsOpen = uiStore.saveSlotsOpen;
 export const confirmDialogOpen = uiStore.confirmDialogOpen;
 export const confirmDialogConfig = uiStore.confirmDialogConfig;
+export const renameDialogOpen = uiStore.renameDialogOpen;
+export const renameDialogConfig = uiStore.renameDialogConfig;
 export const openConfirmDialog = uiStore.openConfirmDialog;
 export const closeConfirmDialog = uiStore.closeConfirmDialog;
+export const openRenameDialog = uiStore.openRenameDialog;
+export const closeRenameDialog = uiStore.closeRenameDialog;

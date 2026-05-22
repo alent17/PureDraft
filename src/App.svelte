@@ -14,6 +14,7 @@
   import MDToolbar from './lib/components/MDToolbar.svelte';
   import HoverPreview from './components/HoverPreview.svelte';
   import ConfirmDialog from './lib/components/ConfirmDialog.svelte';
+  import RenameDialog from './lib/components/RenameDialog.svelte';
   import {
     openFiles,
     currentFileIndex,
@@ -37,6 +38,9 @@
     confirmDialogOpen,
     confirmDialogConfig,
     closeConfirmDialog,
+    renameDialogOpen,
+    renameDialogConfig,
+    closeRenameDialog,
   } from '$lib/stores/ui';
   import { setAcrylicEffect } from '$lib/api/window';
   import { openFileDialog, readFile, saveFile, saveFileAs } from '$lib/utils/tauri';
@@ -761,6 +765,18 @@
     cancelText={$confirmDialogConfig.cancelText || '取消'}
     onConfirm={$confirmDialogConfig.onConfirm}
     onCancel={$confirmDialogConfig.onCancel}
+  />
+{/if}
+
+{#if $renameDialogOpen && $renameDialogConfig}
+  <RenameDialog
+    title={$renameDialogConfig.title || '重命名'}
+    defaultValue={$renameDialogConfig.defaultValue || ''}
+    placeholder={$renameDialogConfig.placeholder || '请输入名称'}
+    confirmText={$renameDialogConfig.confirmText || '确定'}
+    cancelText={$renameDialogConfig.cancelText || '取消'}
+    onConfirm={$renameDialogConfig.onConfirm}
+    onCancel={$renameDialogConfig.onCancel}
   />
 {/if}
 
