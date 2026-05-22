@@ -240,7 +240,7 @@
                 </svg>
               </button>
               {#if openMenuPath === entry.path}
-                <div class="dropdown-menu" role="presentation" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }}>
+                <div class="dropdown-menu" role="presentation" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }} style="z-index: 1000;">
                   <button class="dropdown-item" onclick={() => handleRenameRecent(entry)}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -304,7 +304,7 @@
               </svg>
             </button>
             {#if openMenuPath === entry.path}
-              <div class="dropdown-menu" role="presentation" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }}>
+              <div class="dropdown-menu" role="presentation" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }} style="z-index: 1000;">
                 <button class="dropdown-item" onclick={() => handleRenameRecent(entry)}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -506,12 +506,12 @@
     position: absolute;
     right: 4px;
     top: 100%;
-    z-index: 100;
+    z-index: 1000;
     min-width: 130px;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     padding: 4px;
     animation: dropdownIn 120ms ease-out;
   }
