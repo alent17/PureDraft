@@ -22,7 +22,11 @@
     assocMessage = '';
     const [err] = await setAsDefaultMdEditor();
     if (err) {
-      assocMessage = '设置失败: ' + err.message;
+      if (err.code === 5000) {
+        assocMessage = '⚠️ ' + err.message;
+      } else {
+        assocMessage = '设置失败: ' + err.message;
+      }
     } else {
       isDefaultEditor = true;
       assocMessage = '已设为 .md 文件默认打开程序';

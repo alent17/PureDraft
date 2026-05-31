@@ -4,6 +4,10 @@ use winreg::RegKey;
 
 const PROG_ID: &str = "PureDraft.md";
 
+fn is_dev_mode(exe_path: &str) -> bool {
+    exe_path.contains("\\target\\debug\\") || exe_path.contains("\\target\\release\\")
+}
+
 #[tauri::command]
 pub fn set_as_default_md_editor() -> Result<(), AppError> {
     let exe_path = std::env::current_exe()
@@ -13,6 +17,13 @@ pub fn set_as_default_md_editor() -> Result<(), AppError> {
         })?
         .to_string_lossy()
         .to_string();
+
+    if is_dev_mode(&exe_path) {
+        return Err(AppError::Business {
+            code: 5000,
+            message: "开发模式下无法设置默认打开程序，请先打包为 exe 后再设置".to_string(),
+        });
+    }
 
     let command_line = format!("\"{}\" \"%1\"", exe_path);
 
@@ -82,6 +93,14 @@ pub fn set_as_default_md_editor() -> Result<(), AppError> {
 
 #[tauri::command]
 pub fn check_default_md_editor() -> Result<bool, AppError> {
+    let exe_path = std::env::current_exe()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_default();
+
+    if is_dev_mode(&exe_path) {
+        return Ok(false);
+    }
+
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
     let classes_key = hkcu
