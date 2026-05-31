@@ -44,3 +44,7 @@ export function setAsDefaultMdEditor(): Promise<[AppError | null, null]> {
 export function checkDefaultMdEditor(): Promise<[AppError | null, boolean | null]> {
   return cmd<boolean>('check_default_md_editor');
 }
+
+export function getInitFilePath(): Promise<[AppError | null, string | null]> {
+  return cmd<string>('get_init_file_path_cmd');
+}

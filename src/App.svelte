@@ -47,7 +47,7 @@
     closeRenameDialog,
   } from '$lib/stores/ui';
   import { setAcrylicEffect } from '$lib/api/window';
-  import { openFileDialog, readFile, saveFile, saveFileAs } from '$lib/api/file';
+  import { openFileDialog, readFile, saveFile, saveFileAs, getInitFilePath } from '$lib/api/file';
   import { isMarkdown, isFormattable, getFileType } from '$lib/utils/fileTypes';
   import { formatContent } from '$lib/utils/format';
   import { createMarkedInstance } from '$lib/utils/markdown';
@@ -623,7 +623,32 @@
   onMount(() => {
     setAcrylicEffect($acrylicEnabled);
     document.documentElement.classList.toggle('acrylic-on', $acrylicEnabled);
-    restoreSession();
+    restoreSession().then(() => {
+      getInitFilePath().then(([err, filePath]) => {
+        if (!err && filePath) {
+          const files = get(openFiles);
+          const existingIndex = files.findIndex((f) => f.path === filePath);
+          if (existingIndex >= 0) {
+            switchToFile(existingIndex);
+          } else {
+            readFile(filePath).then(([readErr, content]) => {
+              if (!readErr && content) {
+                const fileName = filePath.split(/[\\/]/).pop() || '';
+                const fileType = getFileType(fileName);
+                addFile({
+                  path: filePath,
+                  name: fileName,
+                  content: content.content,
+                  originalContent: content.content,
+                  fileType,
+                  isModified: false,
+                });
+              }
+            });
+          }
+        }
+      });
+    });
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('paste', handlePaste);
