@@ -3,6 +3,134 @@ use winreg::enums::*;
 use winreg::RegKey;
 
 const PROG_ID: &str = "PureDraft.md";
+const APP_NAME: &str = "PureDraft";
+
+#[link(name = "shell32")]
+extern "system" {
+    fn SHChangeNotify(wEventId: i32, uFlags: u32, dwItem1: *const std::ffi::c_void, dwItem2: *const std::ffi::c_void);
+}
+
+fn notify_shell() {
+    const SHCNE_ASSOCCHANGED: i32 = 0x08000000;
+    const SHCNF_IDLIST: u32 = 0;
+    unsafe {
+        SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, std::ptr::null(), std::ptr::null());
+    }
+}
+
+fn register_app_paths(exe_path: &str) -> Result<(), AppError> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let exe_name = std::path::Path::new(exe_path)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_default();
+
+    let (app_paths_key, _) = hkcu
+        .create_subkey(format!("Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\{}", exe_name))
+        .map_err(|e| AppError::Business {
+            code: 5020,
+            message: format!("创建 App Paths 注册表项失败: {}", e),
+        })?;
+    app_paths_key.set_value("", &exe_path).map_err(|e| AppError::Business {
+        code: 5021,
+        message: format!("设置 App Paths 默认值失败: {}", e),
+    })?;
+    app_paths_key.set_value("Path", &std::path::Path::new(exe_path).parent().unwrap().to_string_lossy().to_string()).ok();
+    Ok(())
+}
+
+fn register_application(exe_path: &str) -> Result<(), AppError> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let command_line = format!("\"{}\" \"%1\"", exe_path);
+
+    let (apps_key, _) = hkcu
+        .create_subkey(format!("Software\\Classes\\Applications\\{}\\shell\\open\\command", std::path::Path::new(exe_path).file_name().unwrap().to_string_lossy()))
+        .map_err(|e| AppError::Business {
+            code: 5022,
+            message: format!("创建 Applications 注册表项失败: {}", e),
+        })?;
+    apps_key.set_value("", &command_line).map_err(|e| AppError::Business {
+        code: 5023,
+        message: format!("设置 Applications 打开命令失败: {}", e),
+    })?;
+
+    Ok(())
+}
+
+fn register_open_with_list(exe_path: &str) -> Result<(), AppError> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let exe_name = std::path::Path::new(exe_path)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_default();
+
+    let (open_with_key, _) = hkcu
+        .create_subkey(format!("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.md\\OpenWithList"))
+        .map_err(|e| AppError::Business {
+            code: 5024,
+            message: format!("创建 OpenWithList 注册表项失败: {}", e),
+        })?;
+
+    let current: String = open_with_key.get_value("MRUList").unwrap_or_default();
+    if current.is_empty() {
+        open_with_key.set_value("MRUList", &"a".to_string()).ok();
+        open_with_key.set_value("a", &exe_name).ok();
+    }
+
+    Ok(())
+}
+
+fn register_capabilities(_exe_path: &str) -> Result<(), AppError> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+
+    let (cap_key, _) = hkcu
+        .create_subkey(format!("Software\\{}\\Capabilities", APP_NAME))
+        .map_err(|e| AppError::Business {
+            code: 5025,
+            message: format!("创建 Capabilities 注册表项失败: {}", e),
+        })?;
+
+    cap_key
+        .set_value("ApplicationName", &APP_NAME)
+        .map_err(|e| AppError::Business {
+            code: 5026,
+            message: format!("设置 ApplicationName 失败: {}", e),
+        })?;
+    cap_key
+        .set_value("ApplicationDescription", &"一款极简丝滑的桌面 Markdown 编辑器")
+        .map_err(|e| AppError::Business {
+            code: 5027,
+            message: format!("设置 ApplicationDescription 失败: {}", e),
+        })?;
+
+    let (file_assoc_key, _) = cap_key
+        .create_subkey("FileAssociations")
+        .map_err(|e| AppError::Business {
+            code: 5028,
+            message: format!("创建 FileAssociations 注册表项失败: {}", e),
+        })?;
+    file_assoc_key
+        .set_value(".md", &PROG_ID)
+        .map_err(|e| AppError::Business {
+            code: 5029,
+            message: format!("设置 FileAssociations .md 失败: {}", e),
+        })?;
+
+    let (reg_apps_key, _) = hkcu
+        .create_subkey("Software\\RegisteredApplications")
+        .map_err(|e| AppError::Business {
+            code: 5030,
+            message: format!("创建 RegisteredApplications 注册表项失败: {}", e),
+        })?;
+    reg_apps_key
+        .set_value(APP_NAME, &format!("Software\\{}\\Capabilities", APP_NAME))
+        .map_err(|e| AppError::Business {
+            code: 5031,
+            message: format!("注册 RegisteredApplications 失败: {}", e),
+        })?;
+
+    Ok(())
+}
 
 #[tauri::command]
 pub fn set_as_default_md_editor() -> Result<(), AppError> {
@@ -42,6 +170,13 @@ pub fn set_as_default_md_editor() -> Result<(), AppError> {
             code: 5004,
             message: format!("设置 .md 默认值失败: {}", e),
         })?;
+    let (open_with_progids_key, _) = classes_key
+        .create_subkey(".md\\OpenWithProgIds")
+        .map_err(|e| AppError::Business {
+            code: 5004,
+            message: format!("创建 OpenWithProgIds 注册表项失败: {}", e),
+        })?;
+    open_with_progids_key.set_value(PROG_ID, &"").ok();
 
     let (prog_key, _) = classes_key
         .create_subkey(PROG_ID)
@@ -82,6 +217,13 @@ pub fn set_as_default_md_editor() -> Result<(), AppError> {
             code: 5010,
             message: format!("设置打开命令失败: {}", e),
         })?;
+
+    register_app_paths(&exe_path)?;
+    register_application(&exe_path)?;
+    register_open_with_list(&exe_path)?;
+    register_capabilities(&exe_path)?;
+
+    notify_shell();
 
     tracing::info!("已将 PureDraft 设为 .md 文件默认打开程序");
     Ok(())
