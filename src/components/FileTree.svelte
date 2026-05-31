@@ -5,6 +5,7 @@
   import { clearAllSaveSlots } from '$lib/utils/saveSlots';
   import { getFileType } from '$lib/utils/fileTypes';
   import Outcome from '$lib/components/Outline.svelte';
+  import FileIcon from '$lib/components/FileIcon.svelte';
   import type { FileType } from '$lib/types';
 
   let {
@@ -227,9 +228,7 @@
         <div class="section-content" role="presentation" onclick={handleDocumentClick} onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }}>
           {#each pinnedFiles as entry (entry.path)}
             <div class="file-item" class:menu-open={openMenuPath === entry.path} onclick={() => handleRecentClick(entry)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter') handleRecentClick(entry); }}>
-              <span class="file-icon file-icon-colored" style="background: {getFileIconColor(getFileType(entry.name))}">
-                {getFileIcon(getFileType(entry.name))}
-              </span>
+              <FileIcon fileType={getFileType(entry.name)} size={16} />
               <span class="file-name" title={entry.path}>
                 {entry.name}
                 {#if pinnedPaths.includes(entry.path)}
@@ -291,9 +290,7 @@
         <div class="section-content" role="presentation" onclick={handleDocumentClick} onkeydown={(e) => { if (e.key === 'Escape') closeMenu(); }}>
           {#each unpinnedFiles as entry (entry.path)}
           <div class="file-item" class:menu-open={openMenuPath === entry.path} onclick={() => handleRecentClick(entry)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter') handleRecentClick(entry); }}>
-            <span class="file-icon file-icon-colored" style="background: {getFileIconColor(getFileType(entry.name))}">
-              {getFileIcon(getFileType(entry.name))}
-            </span>
+            <FileIcon fileType={getFileType(entry.name)} size={16} />
             <span class="file-name" title={entry.path}>
               {entry.name}
               {#if pinnedPaths.includes(entry.path)}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { minimizeWindow, toggleMaximize, closeWindow } from '$lib/utils/tauri';
+  import { minimizeWindow, toggleMaximize, closeWindow } from '$lib/api/window';
   import { currentFile } from '$lib/stores/file';
   import { isMaximized } from '$lib/stores/ui';
 

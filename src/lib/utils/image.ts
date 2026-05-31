@@ -8,7 +8,7 @@ export async function pasteImageFromClipboard(): Promise<ImagePasteResult> {
   try {
     const clipboardItems = await navigator.clipboard.read();
     for (const item of clipboardItems) {
-      const imageTypes = item.types.filter(t => t.startsWith('image/'));
+      const imageTypes = item.types.filter((t) => t.startsWith('image/'));
       if (imageTypes.length === 0) continue;
 
       for (const type of imageTypes) {
@@ -59,8 +59,4 @@ export function getImageMime(ext: string): string {
     bmp: 'image/bmp',
   };
   return mimeMap[ext.toLowerCase()] || 'image/png';
-}
-
-export function hasImageInClipboard(): boolean {
-  return false;
 }

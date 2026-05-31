@@ -28,8 +28,8 @@
   --acrylic-editor-bg: var(--color-editor-bg);
   --acrylic-statusbar-bg: var(--color-statusbar-bg);
 
-  --font-mono: "Cascadia Code", "JetBrains Mono", "Fira Code", Consolas, monospace;
-  --editor-font-family: "Cascadia Code", "JetBrains Mono", "Fira Code", Consolas, monospace;
+  --font-mono: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  --editor-font-family: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace;
   --editor-font-size: 14px;
 }
 
@@ -48,7 +48,7 @@
 /* ==================== WinUI 3 Dark Theme (default) ==================== */
 
 :root,
-[data-mode="dark"] {
+[data-mode='dark'] {
   --color-bg: #202020;
   --color-bg-secondary: #2c2c2c;
   --color-bg-hover: #333333;
@@ -105,7 +105,7 @@
 
 /* ==================== WinUI 3 Light Theme ==================== */
 
-[data-mode="light"] {
+[data-mode='light'] {
   --color-bg: #f3f3f3;
   --color-bg-rgb: 243, 243, 243;
   --color-bg-alpha: 0.88;
@@ -181,7 +181,15 @@ body,
 }
 
 body {
-  font-family: "Segoe UI Variable", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    'Segoe UI Variable',
+    'Segoe UI',
+    -apple-system,
+    BlinkMacSystemFont,
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   user-select: none;
@@ -231,5 +239,53 @@ select {
 }
 
 html {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Accent Color Themes */
+[data-accent='purple'] {
+  --color-accent: #b27eff;
+  --color-accent-hover: #c99dff;
+  --color-statusbar-bg: #7c3aed;
+  --color-selection: rgba(178, 126, 255, 0.25);
+  --color-btn-icon-active: #b27eff;
+  --color-editor-active-line: rgba(178, 126, 255, 0.04);
+}
+
+[data-accent='green'] {
+  --color-accent: #4ade80;
+  --color-accent-hover: #6ee7a0;
+  --color-statusbar-bg: #16a34a;
+  --color-selection: rgba(74, 222, 128, 0.25);
+  --color-btn-icon-active: #4ade80;
+  --color-editor-active-line: rgba(74, 222, 128, 0.04);
+}
+
+[data-accent='orange'] {
+  --color-accent: #fb923c;
+  --color-accent-hover: #fdba74;
+  --color-statusbar-bg: #ea580c;
+  --color-selection: rgba(251, 146, 60, 0.25);
+  --color-btn-icon-active: #fb923c;
+  --color-editor-active-line: rgba(251, 146, 60, 0.04);
+}
+
+[data-accent='red'] {
+  --color-accent: #f87171;
+  --color-accent-hover: #fca5a5;
+  --color-statusbar-bg: #dc2626;
+  --color-selection: rgba(248, 113, 113, 0.25);
+  --color-btn-icon-active: #f87171;
+  --color-editor-active-line: rgba(248, 113, 113, 0.04);
+}
+
+[data-accent='pink'] {
+  --color-accent: #f472b6;
+  --color-accent-hover: #f9a8d4;
+  --color-statusbar-bg: #db2777;
+  --color-selection: rgba(244, 114, 182, 0.25);
+  --color-btn-icon-active: #f472b6;
+  --color-editor-active-line: rgba(244, 114, 182, 0.04);
 }

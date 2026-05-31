@@ -1,19 +1,16 @@
-import { writable, derived, get } from "svelte/store";
-import type { OpenFile } from "$lib/types";
+import { writable, derived, get } from 'svelte/store';
+import type { OpenFile } from '$lib/types';
 
 function createFileStore() {
   const { subscribe, set, update } = writable<OpenFile[]>([]);
   const currentIndex = writable<number>(-1);
 
-  const current = derived(
-    [{ subscribe }, currentIndex],
-    ([$files, $index]) => {
-      if ($index >= 0 && $index < $files.length) {
-        return $files[$index];
-      }
-      return null;
-    },
-  );
+  const current = derived([{ subscribe }, currentIndex], ([$files, $index]) => {
+    if ($index >= 0 && $index < $files.length) {
+      return $files[$index];
+    }
+    return null;
+  });
 
   return {
     subscribe,
@@ -21,7 +18,7 @@ function createFileStore() {
     update,
     currentIndex,
     current,
-    
+
     add(file: OpenFile) {
       update((files) => {
         const existingIndex = files.findIndex((f) => f.path === file.path);
@@ -87,13 +84,13 @@ function createFileStore() {
       currentIndex.set(index);
     },
 
-    getUntitled(content: string = ""): OpenFile {
+    getUntitled(content: string = ''): OpenFile {
       return {
-        path: "",
-        name: "untitled.txt",
+        path: '',
+        name: 'untitled.txt',
         content,
         originalContent: content,
-        fileType: "PlainText",
+        fileType: 'PlainText',
         isModified: false,
         cursor: { line: 1, col: 1 },
       };

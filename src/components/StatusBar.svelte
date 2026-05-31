@@ -3,6 +3,9 @@
   import { formatFileSize } from '$lib/utils/fileTypes';
   import { mode, autoSaveInterval, syncStatus } from '$lib/stores/ui';
   import { getDocumentStats } from '$lib/utils/statistics';
+  import AnimatedNumber from '$lib/components/AnimatedNumber.svelte';
+
+  let { selectedText = '' }: { selectedText?: string } = $props();
 
   let fileType = $derived($currentFile?.fileType || 'No file');
   let lineInfo = $derived(
@@ -17,11 +20,15 @@
   );
 
   let stats = $derived(
-    $currentFile ? getDocumentStats($currentFile.content) : null
+    $currentFile ? getDocumentStats($currentFile.content, selectedText) : null
   );
 
   let wordCountDisplay = $derived(
-    stats ? `字数 ${stats.wordCount}` : ''
+    stats
+      ? (stats.selectedWordCount > 0
+        ? `选中 ${stats.selectedWordCount} 字 · 总 ${stats.wordCount} 字`
+        : `字数 ${stats.wordCount}`)
+      : ''
   );
 
   let readingTimeDisplay = $derived(
@@ -54,8 +61,12 @@
     {/if}
   </div>
   <div class="statusbar-center">
-    {#if wordCountDisplay}
-      <span class="status-item">{wordCountDisplay}</span>
+    {#if stats}
+      {#if stats.selectedWordCount > 0}
+        <span class="status-item">选中 <AnimatedNumber value={stats.selectedWordCount} /> 字 · 总 <AnimatedNumber value={stats.wordCount} /> 字</span>
+      {:else}
+        <span class="status-item">字数 <AnimatedNumber value={stats.wordCount} /></span>
+      {/if}
     {/if}
     {#if readingTimeDisplay}
       <span class="divider">|</span>

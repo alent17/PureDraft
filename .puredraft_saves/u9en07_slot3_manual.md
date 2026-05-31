@@ -278,7 +278,7 @@ echo "Done!"
 
 ### 图片
 
-![占位图片](https://via.placeholder.com/400x200/60cdff/ffffff?text=Placeholder+Image)
+![G1rv_vlaAAADH5L.jpg](http://asset.localhost/E%3A%5CDesktop%5C%E5%A3%81%E7%BA%B8%5CG1rv_vlaAAADH5L.jpg)
 
 ---
 

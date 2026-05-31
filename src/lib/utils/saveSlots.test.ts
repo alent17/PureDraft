@@ -49,7 +49,7 @@ describe('SaveSlots - Core functionality', () => {
   describe('createSaveSlot', () => {
     it('creates a new manual save slot', async () => {
       const slot = await createSaveSlot('manual', testFilePath, testContent, 'Test save');
-      
+
       expect(slot).not.toBeNull();
       expect(slot!.type).toBe('manual');
       expect(slot!.description).toBe('Test save');
@@ -59,7 +59,7 @@ describe('SaveSlots - Core functionality', () => {
 
     it('creates a new auto save slot', async () => {
       const slot = await createSaveSlot('auto', testFilePath, testContent, 'Auto save');
-      
+
       expect(slot).not.toBeNull();
       expect(slot!.type).toBe('auto');
       expect(slot!.description).toBe('Auto save');
@@ -68,7 +68,7 @@ describe('SaveSlots - Core functionality', () => {
     it('increments slot ID for each new slot', async () => {
       const slot1 = await createSaveSlot('manual', testFilePath, testContent, 'Slot 1');
       const slot2 = await createSaveSlot('manual', testFilePath, testContent, 'Slot 2');
-      
+
       expect(slot1!.slotId).toBe(1);
       expect(slot2!.slotId).toBe(2);
     });
@@ -78,10 +78,10 @@ describe('SaveSlots - Core functionality', () => {
         await createSaveSlot('manual', testFilePath, testContent, `Slot ${i + 1}`);
       }
 
-      const slots = getSaveSlots(testFilePath).filter(s => s.type === 'manual');
+      const slots = getSaveSlots(testFilePath).filter((s) => s.type === 'manual');
       expect(slots).toHaveLength(5);
-      
-      const slotIds = slots.map(s => s.slotId);
+
+      const slotIds = slots.map((s) => s.slotId);
       expect(slotIds).toContain(3);
       expect(slotIds).toContain(7);
       expect(slotIds).not.toContain(1);
@@ -94,8 +94,8 @@ describe('SaveSlots - Core functionality', () => {
         await createSaveSlot('auto', testFilePath, testContent, `Auto ${i + 1}`);
       }
 
-      const manualSlots = getSaveSlots(testFilePath).filter(s => s.type === 'manual');
-      const autoSlots = getSaveSlots(testFilePath).filter(s => s.type === 'auto');
+      const manualSlots = getSaveSlots(testFilePath).filter((s) => s.type === 'manual');
+      const autoSlots = getSaveSlots(testFilePath).filter((s) => s.type === 'auto');
 
       expect(manualSlots).toHaveLength(5);
       expect(autoSlots).toHaveLength(5);
@@ -133,13 +133,13 @@ describe('SaveSlots - Core functionality', () => {
     it('captures cursor position', async () => {
       const cursor = { line: 10, col: 25 };
       const slot = await createSaveSlot('manual', testFilePath, testContent, 'With cursor', cursor);
-      
+
       expect(slot!.cursor).toEqual(cursor);
     });
 
     it('captures content length', async () => {
       const slot = await createSaveSlot('manual', testFilePath, testContent, 'Content check');
-      
+
       expect(slot!.contentLength).toBe(testContent.length);
     });
 
@@ -147,7 +147,7 @@ describe('SaveSlots - Core functionality', () => {
       const before = Date.now();
       const slot = await createSaveSlot('manual', testFilePath, testContent, 'Timestamp check');
       const after = Date.now();
-      
+
       expect(slot!.timestamp).toBeGreaterThanOrEqual(before);
       expect(slot!.timestamp).toBeLessThanOrEqual(after);
     });

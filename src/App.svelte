@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { get } from 'svelte/store';
   import type { EditorView } from '@codemirror/view';
   import TitleBar from './components/TitleBar.svelte';
   import Toolbar from './components/Toolbar.svelte';
@@ -23,16 +24,19 @@
     updateFileContent,
     markFileSaved,
     updateCursor,
+    switchToFile,
   } from '$lib/stores/file';
   import {
     activeTab,
     sidebarOpen,
     mode,
+    accentColor,
     scrollSyncEnabled,
     hoverPreviewEnabled,
     acrylicEnabled,
     syncStatus,
     focusMode,
+    toolbarOpen,
     autoSaveInterval,
     customFonts,
     confirmDialogOpen,
@@ -43,8 +47,8 @@
     closeRenameDialog,
   } from '$lib/stores/ui';
   import { setAcrylicEffect } from '$lib/api/window';
-  import { openFileDialog, readFile, saveFile, saveFileAs } from '$lib/utils/tauri';
-  import { isMarkdown, isFormattable } from '$lib/utils/fileTypes';
+  import { openFileDialog, readFile, saveFile, saveFileAs } from '$lib/api/file';
+  import { isMarkdown, isFormattable, getFileType } from '$lib/utils/fileTypes';
   import { formatContent } from '$lib/utils/format';
   import { createMarkedInstance } from '$lib/utils/markdown';
   import { saveState, loadState, clearState } from '$lib/utils/persistence';
@@ -65,6 +69,7 @@
   let previewEl = $state<HTMLDivElement | null>(null);
   let hoverEl = $state<HTMLDivElement | null>(null);
   let splitRatio = $state(0.5);
+  let selectedText = $state('');
   let draggingSplit = $state(false);
   let isSyncingEditorTarget = false;
   let isSyncingPreviewTarget = false;
@@ -85,6 +90,7 @@
 
   $effect(() => {
     document.documentElement.setAttribute('data-mode', $mode);
+    document.documentElement.dataset.accent = $accentColor;
     document.documentElement.classList.toggle('acrylic-on', $acrylicEnabled);
     createMarkedInstance($mode);
     if (typeof window !== 'undefined') {
@@ -257,8 +263,8 @@
   }
 
   async function handleOpenFiles() {
-    const files = await openFileDialog();
-    if (!files) return;
+    const [err, files] = await openFileDialog();
+    if (err || !files) return;
     for (const f of files) {
       const fileType = f.fileType as FileType;
       addFile({
@@ -447,6 +453,8 @@
       }
       const ext = name.split('.').pop()?.toLowerCase() || '';
       const fileType = getFileTypeFromExtension(ext);
+      const saved = loadState();
+      const savedCursor = saved?.files.find(f => f.path === path)?.cursor ?? { line: 1, col: 1 };
       addFile({
         path,
         name,
@@ -454,7 +462,7 @@
         originalContent: content.content,
         fileType,
         isModified: false,
-        cursor: { line: 1, col: 1 },
+        cursor: savedCursor,
       });
       addRecentFile(path, name);
     } catch (e) {
@@ -569,26 +577,66 @@
     $currentFile ? isMarkdown($currentFile.fileType) : false
   );
 
+  function handleBeforeUnload() {
+    saveState();
+  }
+
+  function handleMouseMove(e: MouseEvent) {
+    if (!draggingSplit) return;
+    const el = document.querySelector('.split-layout');
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    splitRatio = Math.min(0.8, Math.max(0.2, (e.clientX - rect.left) / rect.width));
+  }
+
+  function handleMouseUp() {
+    draggingSplit = false;
+  }
+
+  async function restoreSession() {
+    const saved = loadState();
+    if (!saved || saved.files.length === 0) return;
+
+    for (const sf of saved.files) {
+      const [err, content] = await readFile(sf.path);
+      if (err || !content) continue;
+      const fileType = getFileType(sf.name);
+      addFile({
+        path: sf.path,
+        name: sf.name,
+        content: content.content,
+        originalContent: content.content,
+        fileType,
+        isModified: false,
+        cursor: sf.cursor,
+      });
+    }
+
+    const files = get(openFiles);
+    if (saved.activeIndex >= 0 && saved.activeIndex < files.length) {
+      switchToFile(saved.activeIndex);
+    } else if (files.length > 0) {
+      switchToFile(0);
+    }
+  }
+
   onMount(() => {
     setAcrylicEffect($acrylicEnabled);
     document.documentElement.classList.toggle('acrylic-on', $acrylicEnabled);
+    restoreSession();
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('beforeunload', () => saveState());
+    window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('paste', handlePaste);
-    window.addEventListener('mousemove', (e) => {
-      if (!draggingSplit) return;
-      const el = document.querySelector('.split-layout');
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      splitRatio = Math.min(0.8, Math.max(0.2, (e.clientX - rect.left) / rect.width));
-    });
-    window.addEventListener('mouseup', () => { draggingSplit = false; });
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
     return () => {
       clearEditorSyncFlag();
       clearPreviewSyncFlag();
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('beforeunload', () => saveState());
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('paste', handlePaste);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
   });
 </script>
@@ -605,12 +653,14 @@
 >
   {#if !$focusMode}
     <TitleBar />
-    <Toolbar
-      onOpen={handleOpenFiles}
-      onSave={handleSave}
-      onSaveAs={handleSaveAs}
-      onNew={handleNewFile}
-    />
+    {#if $toolbarOpen}
+      <Toolbar
+        onOpen={handleOpenFiles}
+        onSave={handleSave}
+        onSaveAs={handleSaveAs}
+        onNew={handleNewFile}
+      />
+    {/if}
   {/if}
 
   <div class="main-area">
@@ -640,6 +690,7 @@
                   fileType={$currentFile.fileType}
                   onChange={handleEditorChange}
                   onCursorChange={handleCursorChange}
+                  onSelectionChange={(t) => selectedText = t}
                   onScroll={handleEditorScroll}
                   bind:triggerSearch
                   bind:editorViewRef={editorView}
@@ -666,6 +717,7 @@
               fileType={$currentFile.fileType}
               onChange={handleEditorChange}
               onCursorChange={handleCursorChange}
+              onSelectionChange={(t) => selectedText = t}
               onScroll={handleEditorScroll}
               bind:triggerSearch
               bind:editorViewRef={editorView}
@@ -728,7 +780,7 @@
   </div>
 
   {#if !$focusMode}
-    <StatusBar />
+    <StatusBar {selectedText} />
   {/if}
 
   {#if formatting}

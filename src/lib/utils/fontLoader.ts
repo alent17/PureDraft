@@ -1,4 +1,4 @@
-import type { CustomFont } from '$lib/stores/ui';
+import type { CustomFont } from '$lib/types';
 
 declare global {
   interface Window {

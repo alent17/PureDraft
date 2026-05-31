@@ -1,4 +1,4 @@
-const RECENT_KEY = "puredraft_recent";
+const RECENT_KEY = 'puredraft_recent';
 const MAX_RECENT = 20;
 
 export interface RecentFileEntry {
@@ -25,7 +25,7 @@ export function addRecentFile(path: string, name: string): void {
   if (!path) return;
   try {
     const files = getRecentFiles();
-    const existing = files.findIndex(f => f.path === path);
+    const existing = files.findIndex((f) => f.path === path);
     const entry: RecentFileEntry = { path, name, lastOpened: Date.now() };
 
     if (existing >= 0) {
@@ -44,7 +44,7 @@ export function addRecentFile(path: string, name: string): void {
 
 export function removeRecentFile(path: string): void {
   try {
-    const files = getRecentFiles().filter(f => f.path !== path);
+    const files = getRecentFiles().filter((f) => f.path !== path);
     localStorage.setItem(RECENT_KEY, JSON.stringify(files));
   } catch {
     // silent fail

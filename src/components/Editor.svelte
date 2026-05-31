@@ -11,6 +11,7 @@
   import { getLanguageExtension } from '$lib/utils/fileTypes';
   import { mode, acrylicEnabled, fontSize, fontFamily } from '$lib/stores/ui';
   import SearchBar from './SearchBar.svelte';
+  import Minimap from './Minimap.svelte';
   import { setSearchResults, createSearchHighlightExtension, searchTheme } from '$lib/utils/search';
 
   let {
@@ -18,6 +19,7 @@
     fileType,
     onChange,
     onCursorChange,
+    onSelectionChange,
     onScroll,
     triggerSearch = $bindable(false),
     editorViewRef = $bindable(null as EditorView | null),
@@ -26,6 +28,7 @@
     fileType: FileType;
     onChange: (value: string) => void;
     onCursorChange?: (line: number, col: number) => void;
+    onSelectionChange?: (selectedText: string) => void;
     onScroll?: (scrollTop: number, scrollHeight: number, clientHeight: number) => void;
     triggerSearch?: boolean;
     editorViewRef?: EditorView | null;
@@ -40,6 +43,8 @@
   let currentContent = $state(content);
   let currentMode = $state('dark');
   let searchVisible = $state(false);
+  let scrollState = $state({ scrollTop: 0, scrollHeight: 0, clientHeight: 0 });
+  let showMinimap = $derived(content.split('\n').length > 50);
 
   const darkCM = EditorView.theme({
     '&': { backgroundColor: '#1F1F1F', color: '#D4D4D4', height: '100%' },
@@ -223,10 +228,19 @@
             currentContent = update.state.doc.toString();
             onChange(currentContent);
           }
-          if (update.selectionSet && onCursorChange) {
-            const pos = update.state.selection.main.head;
-            const line = update.state.doc.lineAt(pos);
-            onCursorChange(line.number, pos - line.from + 1);
+          if (update.selectionSet) {
+            if (onCursorChange) {
+              const pos = update.state.selection.main.head;
+              const line = update.state.doc.lineAt(pos);
+              onCursorChange(line.number, pos - line.from + 1);
+            }
+            if (onSelectionChange) {
+              const sel = update.state.sliceDoc(
+                update.state.selection.main.from,
+                update.state.selection.main.to
+              );
+              onSelectionChange(sel);
+            }
           }
         }),
         EditorView.lineWrapping,
@@ -236,11 +250,19 @@
     view = new EditorView({ state, parent: container });
     editorViewRef = view;
 
-    if (onScroll) {
-      view.scrollDOM.addEventListener('scroll', () => {
-        onScroll(view!.scrollDOM.scrollTop, view!.scrollDOM.scrollHeight, view!.scrollDOM.clientHeight);
-      });
-    }
+    view.scrollDOM.addEventListener('scroll', () => {
+      if (!view) return;
+      const { scrollTop, scrollHeight, clientHeight } = view.scrollDOM;
+      scrollState = { scrollTop, scrollHeight, clientHeight };
+      if (onScroll) {
+        onScroll(scrollTop, scrollHeight, clientHeight);
+      }
+    });
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   });
 
   $effect(() => {
@@ -283,6 +305,11 @@
     }
   });
 
+  function handleMinimapNavigate(ratio: number) {
+    if (!view) return;
+    view.scrollDOM.scrollTop = ratio * view.scrollDOM.scrollHeight;
+  }
+
   function handleKeyDown(e: KeyboardEvent) {
     const ctrl = e.ctrlKey || e.metaKey;
     if (ctrl && e.key === 'f') {
@@ -290,11 +317,6 @@
       searchVisible = true;
     }
   }
-
-  onMount(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  });
 
   onDestroy(() => {
     view?.destroy();
@@ -305,7 +327,18 @@
 
 <div class="editor-wrapper">
   <SearchBar bind:visible={searchVisible} bind:editorView={view} />
-  <div class="editor-container" bind:this={container}></div>
+  <div class="editor-content">
+    <div class="editor-container" bind:this={container}></div>
+    {#if showMinimap}
+      <Minimap
+        content={currentContent}
+        scrollTop={scrollState.scrollTop}
+        scrollHeight={scrollState.scrollHeight}
+        clientHeight={scrollState.clientHeight}
+        onNavigate={handleMinimapNavigate}
+      />
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -315,7 +348,13 @@
     background: var(--color-editor-bg);
   }
 
+  .editor-content {
+    display: flex;
+    height: 100%;
+  }
+
   .editor-container {
+    flex: 1;
     height: 100%;
   }
 

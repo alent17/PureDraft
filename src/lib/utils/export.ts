@@ -124,8 +124,7 @@ export function exportToHTML(content: string, fileName: string = 'document'): vo
   html = processMermaid(html);
 
   const themeStyle = get(mode) === 'dark' ? applyDarkTheme() : '';
-  const fullHtml = HTML_TEMPLATE
-    .replace('{{title}}', fileName)
+  const fullHtml = HTML_TEMPLATE.replace('{{title}}', fileName)
     .replace('{{content}}', html)
     .replace('<style id="theme-style"></style>', `<style id="theme-style">${themeStyle}</style>`);
 

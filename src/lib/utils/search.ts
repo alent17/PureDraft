@@ -1,5 +1,5 @@
-import { EditorView, Decoration, type DecorationSet } from "@codemirror/view";
-import { StateField, StateEffect } from "@codemirror/state";
+import { EditorView, Decoration, type DecorationSet } from '@codemirror/view';
+import { StateField, StateEffect } from '@codemirror/state';
 
 export const setSearchResults = StateEffect.define<{
   results: { from: number; to: number }[];
@@ -17,13 +17,8 @@ export const searchField = StateField.define<DecorationSet>({
         const builder: any[] = [];
 
         results.forEach((result, index) => {
-          const className =
-            index === currentIndex
-              ? "cm-searchMatch-selected"
-              : "cm-searchMatch";
-          builder.push(
-            Decoration.mark({ class: className }).range(result.from, result.to),
-          );
+          const className = index === currentIndex ? 'cm-searchMatch-selected' : 'cm-searchMatch';
+          builder.push(Decoration.mark({ class: className }).range(result.from, result.to));
         });
 
         return Decoration.set(builder.sort((a, b) => a.from - b.from));
@@ -39,20 +34,17 @@ export function createSearchHighlightExtension() {
 }
 
 export const searchTheme = EditorView.baseTheme({
-  ".cm-searchMatch": {
-    backgroundColor: "rgba(240, 185, 11, 0.2)",
-    borderRadius: "2px",
+  '.cm-searchMatch': {
+    backgroundColor: 'rgba(240, 185, 11, 0.2)',
+    borderRadius: '2px',
   },
-  ".cm-searchMatch-selected": {
-    backgroundColor: "rgba(240, 185, 11, 0.4)",
-    borderRadius: "2px",
+  '.cm-searchMatch-selected': {
+    backgroundColor: 'rgba(240, 185, 11, 0.4)',
+    borderRadius: '2px',
   },
 });
 
-export async function searchContent(
-  view: EditorView,
-  query: string,
-): Promise<any[]> {
+export async function searchContent(view: EditorView, query: string): Promise<any[]> {
   if (!query) return [];
 
   const results: any[] = [];

@@ -100,7 +100,8 @@ $$\lim\_{x \to 0} \frac{\sin x}{x} = 1$$
 ```javascript
 function fibonacci(n) {
   if (n <= 1) return n;
-  let a = 0, b = 1;
+  let a = 0,
+    b = 1;
   for (let i = 2; i <= n; i++) {
     [a, b] = [b, a + b];
   }
@@ -235,9 +236,9 @@ echo "Done!"
 
 - [x] 完成 Markdown 解析器
 - [x] 实现语法高亮
-- [ ] 添加图片粘贴支持
-- [ ] 实现文件自动保存
-- [ ] 添加插件系统
+- [x] 添加图片粘贴支持
+- [x] 实现文件自动保存
+- [x] 添加插件系统
 - [x] 支持深色/浅色主题切换
 
 ---
@@ -278,7 +279,7 @@ echo "Done!"
 
 ### 图片
 
-![占位图片](https://via.placeholder.com/400x200/60cdff/ffffff?text=Placeholder+Image)
+![G1rv_vlaAAADH5L.jpg](http://asset.localhost/E%3A%5CDesktop%5C%E5%A3%81%E7%BA%B8%5CG1rv_vlaAAADH5L.jpg)
 
 ---
 

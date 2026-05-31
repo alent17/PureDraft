@@ -18,6 +18,8 @@ pub fn run() {
             commands::file_ops::open_folder,
             commands::file_ops::read_file_content,
             commands::file_ops::write_file,
+            commands::file_assoc::set_as_default_md_editor,
+            commands::file_assoc::check_default_md_editor,
             commands::window_ops::minimize_window,
             commands::window_ops::toggle_maximize,
             commands::window_ops::close_window,

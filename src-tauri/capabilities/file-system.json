@@ -3,10 +3,5 @@
   "identifier": "file-system-capability",
   "description": "File system access (open, save, dialogs)",
   "windows": ["main"],
-  "permissions": [
-    "core:path:default",
-    "dialog:default",
-    "dialog:allow-open",
-    "dialog:allow-save"
-  ]
+  "permissions": ["core:path:default", "dialog:default", "dialog:allow-open", "dialog:allow-save"]
 }

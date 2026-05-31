@@ -1,8 +1,8 @@
-import type { OpenFile } from "../types";
-import { get } from "svelte/store";
-import { openFiles, currentFileIndex } from "../stores/file";
+import type { OpenFile } from '../types';
+import { get } from 'svelte/store';
+import { openFiles, currentFileIndex } from '../stores/file';
 
-const STORAGE_KEY = "puredraft_state";
+const STORAGE_KEY = 'puredraft_state';
 
 export interface SavedFile {
   path: string;
@@ -39,7 +39,7 @@ export function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) {
-    console.error("Failed to save state:", e);
+    console.error('Failed to save state:', e);
   }
 }
 
@@ -49,7 +49,7 @@ export function loadState(): SavedState | null {
     if (!data) return null;
     return JSON.parse(data) as SavedState;
   } catch (e) {
-    console.error("Failed to load state:", e);
+    console.error('Failed to load state:', e);
     return null;
   }
 }
@@ -58,6 +58,6 @@ export function clearState() {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (e) {
-    console.error("Failed to clear state:", e);
+    console.error('Failed to clear state:', e);
   }
 }

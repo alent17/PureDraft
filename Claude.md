@@ -250,10 +250,13 @@ panic = "abort"
 
 ```typescript
 // $lib/api/index.ts
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from '@tauri-apps/api/core';
 
 export class AppError extends Error {
-  constructor(public readonly code: number, message: string) {
+  constructor(
+    public readonly code: number,
+    message: string,
+  ) {
     super(message);
   }
 }
@@ -274,12 +277,11 @@ export async function cmd<T>(
 
 ```typescript
 // $lib/api/file.ts
-import { cmd } from "$lib/api";
-import type { FileEntry } from "$lib/types";
+import { cmd } from '$lib/api';
+import type { FileEntry } from '$lib/types';
 
 // 使用示例： const [err, files] = await getFileList("/usr");
-export const getFileList = (path: string) =>
-  cmd<FileEntry[]>("get_file_list", { path });
+export const getFileList = (path: string) => cmd<FileEntry[]>('get_file_list', { path });
 ```
 
 - 禁止在 `.svelte` 中直接 `import { invoke }`。

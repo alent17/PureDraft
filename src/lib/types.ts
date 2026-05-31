@@ -60,3 +60,28 @@ export interface ApiResponse<T> {
 export interface WindowState {
   isMaximized: boolean;
 }
+
+export interface CustomFont {
+  name: string;
+  dataUrl: string;
+}
+
+export interface ConfirmDialogConfig {
+  title: string;
+  message: string;
+  danger?: boolean;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
+export interface RenameDialogConfig {
+  title?: string;
+  defaultValue?: string;
+  placeholder?: string;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm?: (value: string) => void;
+  onCancel?: () => void;
+}

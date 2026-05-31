@@ -2,6 +2,15 @@
   "productName": "PureDraft",
   "version": "0.1.0",
   "identifier": "com.puredraft.app",
+  "bundle": {
+    "fileAssociations": [
+      {
+        "ext": ["md"],
+        "mimeType": "text/markdown",
+        "description": "Markdown 文件"
+      }
+    ]
+  },
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",

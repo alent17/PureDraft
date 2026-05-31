@@ -307,7 +307,7 @@
     if (selection) {
       selection.removeAllRanges();
       selection.addRange(range);
-      range.startContainer.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      range.startContainer.parentElement?.scrollIntoView({ behavior: 'auto', block: 'center' });
     }
   }
 

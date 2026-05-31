@@ -4,6 +4,7 @@
   import type { FileType } from '$lib/types';
   import { isMarkdown } from '$lib/utils/fileTypes';
   import { openImageDialog } from '$lib/utils/tauri';
+  import { selectAllOccurrences } from '$lib/utils/editorCommands';
   import Tooltip from '$lib/components/Tooltip.svelte';
 
   let {
@@ -108,8 +109,21 @@
   }
 </script>
 
-{#if isMD}
 <div class="md-toolbar">
+  <div class="md-toolbar-group">
+    <Tooltip text="全选相同文本">
+      <button class="md-btn" onclick={() => editorView && selectAllOccurrences(editorView)}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M17 8l-5-5-5 5"/>
+          <path d="M17 16l-5 5-5-5"/>
+        </svg>
+      </button>
+    </Tooltip>
+  </div>
+
+  {#if isMD}
+  <div class="md-toolbar-separator"></div>
+
   <div class="md-toolbar-group">
     <Tooltip text="一级标题">
       <button class="md-btn" onclick={insertH1}>
@@ -313,8 +327,8 @@
       </button>
     </Tooltip>
   </div>
+  {/if}
 </div>
-{/if}
 
 <style>
   .md-toolbar {

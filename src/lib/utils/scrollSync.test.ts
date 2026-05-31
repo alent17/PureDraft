@@ -196,7 +196,11 @@ describe('ScrollSyncEngine', () => {
   describe('horizontal sync', () => {
     it('returns correct ratio for editor horizontal scroll', () => {
       engine.reset();
-      const hState: HorizontalScrollState = { scrollLeft: 600, scrollWidth: 2000, clientWidth: 800 };
+      const hState: HorizontalScrollState = {
+        scrollLeft: 600,
+        scrollWidth: 2000,
+        clientWidth: 800,
+      };
       const result = engine.onEditorScrollH(hState);
       expect(result).toBeCloseTo(0.5);
     });

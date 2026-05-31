@@ -1,11 +1,11 @@
-import { writeFile, readFile } from "$lib/api/file";
+import { writeFile, readFile } from '$lib/api/file';
 
 const MAX_SLOTS_PER_TYPE = 5;
-const STORAGE_PREFIX = "puredraft_save_slots:";
+const STORAGE_PREFIX = 'puredraft_save_slots:';
 
 export interface SaveSlotMeta {
   slotId: number;
-  type: "manual" | "auto";
+  type: 'manual' | 'auto';
   timestamp: number;
   description: string;
   cursor: { line: number; col: number };
@@ -49,9 +49,9 @@ function hashPath(filePath: string): string {
 }
 
 function buildSlotDiskPath(filePath: string, store: SaveSlotStore, meta: SaveSlotMeta): string {
-  const dir = filePath.substring(0, filePath.lastIndexOf("\\") || filePath.lastIndexOf("/"));
-  const sep = filePath.includes("\\") ? "\\" : "/";
-  const ext = filePath.split(".").pop() || "txt";
+  const dir = filePath.substring(0, filePath.lastIndexOf('\\') || filePath.lastIndexOf('/'));
+  const sep = filePath.includes('\\') ? '\\' : '/';
+  const ext = filePath.split('.').pop() || 'txt';
   return `${dir}${sep}.puredraft_saves${sep}${hashPath(filePath)}_slot${meta.slotId}_${meta.type}.${ext}`;
 }
 
@@ -60,21 +60,28 @@ export function getSaveSlots(filePath: string): SaveSlotMeta[] {
 }
 
 export async function createSaveSlot(
-  type: "manual" | "auto",
+  type: 'manual' | 'auto',
   filePath: string,
   content: string,
-  description: string = "",
+  description: string = '',
   cursor: { line: number; col: number } = { line: 1, col: 1 },
 ): Promise<SaveSlotMeta | null> {
-  console.log(`[SaveSlots] createSaveSlot called — type=${type}, file=${filePath}, contentLen=${content.length}`);
+  console.log(
+    `[SaveSlots] createSaveSlot called — type=${type}, file=${filePath}, contentLen=${content.length}`,
+  );
   const store = loadStore(filePath);
   const typeSlots = store.slots.filter((s) => s.type === type);
-  console.log(`[SaveSlots] current ${type} slots before create: ${typeSlots.length}/${MAX_SLOTS_PER_TYPE}`, typeSlots.map(s => ({ id: s.slotId, ts: new Date(s.timestamp).toISOString() })));
+  console.log(
+    `[SaveSlots] current ${type} slots before create: ${typeSlots.length}/${MAX_SLOTS_PER_TYPE}`,
+    typeSlots.map((s) => ({ id: s.slotId, ts: new Date(s.timestamp).toISOString() })),
+  );
 
   if (typeSlots.length >= MAX_SLOTS_PER_TYPE) {
     typeSlots.sort((a, b) => a.timestamp - b.timestamp);
     const oldest = typeSlots[0];
-    console.log(`[SaveSlots] FIFO eviction — removing oldest ${type} slot #${oldest.slotId}, timestamp=${new Date(oldest.timestamp).toISOString()}, contentLen=${oldest.contentLength}`);
+    console.log(
+      `[SaveSlots] FIFO eviction — removing oldest ${type} slot #${oldest.slotId}, timestamp=${new Date(oldest.timestamp).toISOString()}, contentLen=${oldest.contentLength}`,
+    );
     store.slots = store.slots.filter((s) => s.slotId !== oldest.slotId);
   }
 
@@ -85,7 +92,7 @@ export async function createSaveSlot(
     description,
     cursor,
     contentLength: content.length,
-    savedPath: "",
+    savedPath: '',
   };
 
   meta.savedPath = buildSlotDiskPath(filePath, store, meta);
@@ -99,14 +106,13 @@ export async function createSaveSlot(
 
   store.slots.push(meta);
   saveStore(filePath, store);
-  console.log(`[SaveSlots] slot #${meta.slotId} created successfully — type=${type}, timestamp=${new Date(meta.timestamp).toISOString()}, contentLen=${meta.contentLength}`);
+  console.log(
+    `[SaveSlots] slot #${meta.slotId} created successfully — type=${type}, timestamp=${new Date(meta.timestamp).toISOString()}, contentLen=${meta.contentLength}`,
+  );
   return meta;
 }
 
-export async function deleteSaveSlot(
-  filePath: string,
-  slotId: number,
-): Promise<boolean> {
+export async function deleteSaveSlot(filePath: string, slotId: number): Promise<boolean> {
   const store = loadStore(filePath);
   const idx = store.slots.findIndex((s) => s.slotId === slotId);
   if (idx < 0) {
@@ -116,7 +122,9 @@ export async function deleteSaveSlot(
 
   const removed = store.slots.splice(idx, 1)[0];
   saveStore(filePath, store);
-  console.log(`[SaveSlots] slot #${slotId} deleted — type=${removed.type}, timestamp=${new Date(removed.timestamp).toISOString()}`);
+  console.log(
+    `[SaveSlots] slot #${slotId} deleted — type=${removed.type}, timestamp=${new Date(removed.timestamp).toISOString()}`,
+  );
   return true;
 }
 

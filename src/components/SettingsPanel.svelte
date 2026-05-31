@@ -1,9 +1,36 @@
 <script lang="ts">
-  import { mode, settingsOpen, autoSaveInterval, scrollSyncEnabled, focusMode, acrylicEnabled, fontSize, fontFamily, customFonts } from '$lib/stores/ui';
-  import type { AutoSaveInterval } from '$lib/stores/ui';
+  import { mode, settingsOpen, autoSaveInterval, scrollSyncEnabled, focusMode, acrylicEnabled, fontSize, fontFamily, customFonts, accentColor, ACCENT_COLORS, openConfirmDialog, closeConfirmDialog } from '$lib/stores/ui';
+  import type { AutoSaveInterval, AccentColor } from '$lib/stores/ui';
   import { setAcrylicEffect } from '$lib/api/window';
+  import { setAsDefaultMdEditor, checkDefaultMdEditor } from '$lib/api/file';
   import { selectFontFile } from '$lib/utils/fontLoader';
   import { loadCustomFonts } from '$lib/utils/fontLoader';
+
+  let isDefaultEditor = $state(false);
+  let assocLoading = $state(false);
+  let assocMessage = $state('');
+
+  async function checkDefaultStatus() {
+    const [err, isDefault] = await checkDefaultMdEditor();
+    if (!err && isDefault !== null) {
+      isDefaultEditor = isDefault;
+    }
+  }
+
+  async function handleSetDefault() {
+    assocLoading = true;
+    assocMessage = '';
+    const [err] = await setAsDefaultMdEditor();
+    if (err) {
+      assocMessage = '设置失败: ' + err.message;
+    } else {
+      isDefaultEditor = true;
+      assocMessage = '已设为 .md 文件默认打开程序';
+    }
+    assocLoading = false;
+  }
+
+  checkDefaultStatus();
 
   const PRESET_FONTS = [
     { label: 'Cascadia Code', value: "'Cascadia Code', monospace" },
@@ -33,11 +60,23 @@
       if (!font) return;
       const exists = $customFonts.some(f => f.name === font.name);
       if (exists) {
-        alert('该字体已存在');
+        openConfirmDialog({
+          title: '字体已存在',
+          message: '该字体已存在，请勿重复上传。',
+          confirmText: '知道了',
+          onConfirm: () => closeConfirmDialog(),
+          onCancel: () => closeConfirmDialog(),
+        });
         return;
       }
       if ($customFonts.length >= 5) {
-        alert('最多只能上传 5 个自定义字体');
+        openConfirmDialog({
+          title: '数量限制',
+          message: '最多只能上传 5 个自定义字体。',
+          confirmText: '知道了',
+          onConfirm: () => closeConfirmDialog(),
+          onCancel: () => closeConfirmDialog(),
+        });
         return;
       }
       customFonts.update(fonts => [...fonts, font]);
@@ -49,14 +88,24 @@
   }
 
   function handleRemoveCustomFont(fontNameToRemove: string) {
-    if (!window.confirm(`确定要移除自定义字体 "${fontNameToRemove}" 吗？`)) return;
-    const wasCurrent = currentFontName === fontNameToRemove;
-    customFonts.update(fonts => fonts.filter(f => f.name !== fontNameToRemove));
-    loadCustomFonts($customFonts.filter(f => f.name !== fontNameToRemove));
-    if (wasCurrent) {
-      fontFamily.set(PRESET_FONTS[0].value);
-      currentFontName = PRESET_FONTS[0].label;
-    }
+    openConfirmDialog({
+      title: '移除字体',
+      message: `确定要移除自定义字体 "${fontNameToRemove}" 吗？`,
+      danger: true,
+      confirmText: '移除',
+      cancelText: '取消',
+      onConfirm: () => {
+        const wasCurrent = currentFontName === fontNameToRemove;
+        customFonts.update(fonts => fonts.filter(f => f.name !== fontNameToRemove));
+        loadCustomFonts($customFonts.filter(f => f.name !== fontNameToRemove));
+        if (wasCurrent) {
+          fontFamily.set(PRESET_FONTS[0].value);
+          currentFontName = PRESET_FONTS[0].label;
+        }
+        closeConfirmDialog();
+      },
+      onCancel: () => closeConfirmDialog(),
+    });
   }
 
   async function handleAcrylicToggle() {
@@ -125,6 +174,33 @@
             </svg>
             深色
           </button>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">主题色</span>
+          <span class="setting-desc">选择强调色</span>
+        </div>
+        <div class="accent-group">
+          {#each Object.entries(ACCENT_COLORS) as [name, colors]}
+            <button
+              class="accent-btn"
+              class:active={$accentColor === name}
+              style="--accent-preview: {colors.accent}"
+              onclick={() => {
+                accentColor.set(name as AccentColor);
+                document.documentElement.dataset.accent = name;
+              }}
+              title={name}
+            >
+              {#if $accentColor === name}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              {/if}
+            </button>
+          {/each}
         </div>
       </div>
 
@@ -256,6 +332,29 @@
             {/each}
           </div>
         {/if}
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">文件关联</span>
+          <span class="setting-desc">将 PureDraft 设为 .md 文件默认打开程序</span>
+        </div>
+        <div class="assoc-group">
+          {#if isDefaultEditor}
+            <span class="assoc-status assoc-active">已是默认</span>
+          {:else}
+            <button
+              class="mode-btn"
+              onclick={handleSetDefault}
+              disabled={assocLoading}
+            >
+              {assocLoading ? '设置中...' : '设为默认'}
+            </button>
+          {/if}
+          {#if assocMessage}
+            <span class="assoc-message" class:success={isDefaultEditor}>{assocMessage}</span>
+          {/if}
+        </div>
       </div>
 
       <div class="setting-row">
@@ -473,5 +572,57 @@
   input[type="range"] {
     accent-color: var(--color-accent);
     width: 120px;
+  }
+
+  .accent-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .accent-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-preview);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 120ms ease;
+    border: 2px solid transparent;
+  }
+
+  .accent-btn:hover {
+    transform: scale(1.1);
+  }
+
+  .accent-btn.active {
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--accent-preview);
+  }
+
+  .assoc-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .assoc-status {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+  }
+
+  .assoc-active {
+    background: rgba(74, 222, 128, 0.15);
+    color: #4ade80;
+  }
+
+  .assoc-message {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+
+  .assoc-message.success {
+    color: #4ade80;
   }
 </style>
