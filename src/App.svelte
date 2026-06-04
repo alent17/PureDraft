@@ -642,6 +642,7 @@
                   originalContent: content.content,
                   fileType,
                   isModified: false,
+                  cursor: { line: 1, col: 1 },
                 });
               }
             });

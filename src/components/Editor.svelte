@@ -272,12 +272,15 @@
   });
 
   $effect(() => {
-    if (view && content !== currentContent) {
+    if (!view) return;
+    const incoming = content;
+    const editorDoc = view.state.doc.toString();
+    if (incoming !== editorDoc) {
       view.dispatch({
-        changes: { from: 0, to: view.state.doc.length, insert: content },
+        changes: { from: 0, to: view.state.doc.length, insert: incoming },
       });
-      currentContent = content;
     }
+    currentContent = incoming;
   });
 
   $effect(() => {
