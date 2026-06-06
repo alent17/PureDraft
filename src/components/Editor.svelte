@@ -11,7 +11,6 @@
   import { getLanguageExtension } from '$lib/utils/fileTypes';
   import { mode, acrylicEnabled, fontSize, fontFamily } from '$lib/stores/ui';
   import SearchBar from './SearchBar.svelte';
-  import Minimap from './Minimap.svelte';
   import { setSearchResults, createSearchHighlightExtension, searchTheme } from '$lib/utils/search';
 
   let {
@@ -44,7 +43,6 @@
   let currentMode = $state('dark');
   let searchVisible = $state(false);
   let scrollState = $state({ scrollTop: 0, scrollHeight: 0, clientHeight: 0 });
-  let showMinimap = $derived(content.split('\n').length > 50);
 
   const darkCM = EditorView.theme({
     '&': { backgroundColor: '#1F1F1F', color: '#D4D4D4', height: '100%' },
@@ -308,11 +306,6 @@
     }
   });
 
-  function handleMinimapNavigate(ratio: number) {
-    if (!view) return;
-    view.scrollDOM.scrollTop = ratio * view.scrollDOM.scrollHeight;
-  }
-
   function handleKeyDown(e: KeyboardEvent) {
     const ctrl = e.ctrlKey || e.metaKey;
     if (ctrl && e.key === 'f') {
@@ -332,15 +325,6 @@
   <SearchBar bind:visible={searchVisible} bind:editorView={view} />
   <div class="editor-content">
     <div class="editor-container" bind:this={container}></div>
-    {#if showMinimap}
-      <Minimap
-        content={currentContent}
-        scrollTop={scrollState.scrollTop}
-        scrollHeight={scrollState.scrollHeight}
-        clientHeight={scrollState.clientHeight}
-        onNavigate={handleMinimapNavigate}
-      />
-    {/if}
   </div>
 </div>
 
