@@ -150,9 +150,9 @@ impl FileService {
         let size = Some(metadata.len());
         let modified = metadata.modified()
             .ok()
-            .and_then(|t| {
+            .map(|t| {
                 let datetime: chrono::DateTime<chrono::Utc> = t.into();
-                Some(datetime.to_rfc3339())
+                datetime.to_rfc3339()
             });
 
         if path.is_dir() {
@@ -214,9 +214,9 @@ impl FileService {
         let size = Some(metadata.len());
         let modified = metadata.modified()
             .ok()
-            .and_then(|t| {
+            .map(|t| {
                 let datetime: chrono::DateTime<chrono::Utc> = t.into();
-                Some(datetime.to_rfc3339())
+                datetime.to_rfc3339()
             });
 
         Ok(ApiResponse::success(FileNode {
@@ -251,9 +251,9 @@ impl FileService {
         let size = Some(metadata.len());
         let modified = metadata.modified()
             .ok()
-            .and_then(|t| {
+            .map(|t| {
                 let datetime: chrono::DateTime<chrono::Utc> = t.into();
-                Some(datetime.to_rfc3339())
+                datetime.to_rfc3339()
             });
 
         Ok(ApiResponse::success(FileNode {

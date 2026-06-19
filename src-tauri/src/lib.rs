@@ -4,33 +4,40 @@ mod models;
 mod services;
 mod utils;
 
-static INIT_FILE_PATH: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
-
-pub fn get_init_file_path() -> Option<String> {
-    INIT_FILE_PATH.get().cloned().flatten()
-}
+use tauri::Emitter;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tracing_subscriber::fmt::init();
 
-    let init_file = {
-        let args: Vec<String> = std::env::args().collect();
-        if args.len() > 1 {
-            let path = std::path::PathBuf::from(&args[1]);
-            if path.exists() && path.extension().map_or(false, |ext| ext == "md") {
-                Some(args[1].clone())
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    };
-    INIT_FILE_PATH.set(init_file).ok();
-
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if let Some(path) = args.get(1) {
+                let p = std::path::PathBuf::from(path);
+                if p.exists() && p.extension().is_some_and(|ext| ext == "md") {
+                    let _ = app.emit("file-open-requested", path.clone());
+                    if let Some(w) = app.get_webview_window("main") {
+                        let _ = w.set_focus();
+                    }
+                }
+            }
+        }))
+        .setup(|app| {
+            let args: Vec<String> = std::env::args().collect();
+            if let Some(path) = args.get(1) {
+                let p = std::path::PathBuf::from(path);
+                if p.exists() && p.extension().is_some_and(|ext| ext == "md") {
+                    let handle = app.handle().clone();
+                    let path_clone = path.clone();
+                    tauri::async_runtime::spawn(async move {
+                        let _ = handle.emit("file-open-requested", path_clone);
+                    });
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::file_ops::read_file,
             commands::file_ops::save_file,
@@ -46,8 +53,10 @@ pub fn run() {
             commands::window_ops::close_window,
             commands::window_ops::is_maximized,
             commands::window_ops::set_acrylic_effect,
-            commands::file_ops::get_init_file_path_cmd,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .unwrap_or_else(|e| {
+            eprintln!("error while running tauri application: {e}");
+            std::process::exit(1);
+        });
 }

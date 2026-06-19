@@ -49,7 +49,3 @@ pub async fn write_file(path: String, content: String) -> Result<crate::models::
     service.write_file(&path, &content)
 }
 
-#[tauri::command]
-pub fn get_init_file_path_cmd() -> Option<String> {
-    crate::get_init_file_path()
-}

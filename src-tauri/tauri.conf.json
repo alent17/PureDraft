@@ -5,6 +5,7 @@
   "bundle": {
     "fileAssociations": [
       {
+        "name": "PureDraft Markdown",
         "ext": ["md"],
         "mimeType": "text/markdown",
         "description": "Markdown 文件"

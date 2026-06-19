@@ -14,6 +14,7 @@
   import SaveSlotPanel from './components/SaveSlotPanel.svelte';
   import MDToolbar from './lib/components/MDToolbar.svelte';
   import HoverPreview from './components/HoverPreview.svelte';
+  import DynamicIsland from './components/DynamicIsland.svelte';
   import ConfirmDialog from './lib/components/ConfirmDialog.svelte';
   import RenameDialog from './lib/components/RenameDialog.svelte';
   import {
@@ -47,7 +48,8 @@
     closeRenameDialog,
   } from '$lib/stores/ui';
   import { setAcrylicEffect } from '$lib/api/window';
-  import { openFileDialog, readFile, saveFile, saveFileAs, getInitFilePath } from '$lib/api/file';
+  import { openFileDialog, readFile, saveFile, saveFileAs } from '$lib/api/file';
+  import { listen, type UnlistenFn } from '@tauri-apps/api/event';
   import { isMarkdown, isFormattable, getFileType } from '$lib/utils/fileTypes';
   import { formatContent } from '$lib/utils/format';
   import { createMarkedInstance } from '$lib/utils/markdown';
@@ -75,8 +77,33 @@
   let isSyncingPreviewTarget = false;
   let editorScrollEndTimer: ReturnType<typeof setTimeout> | null = null;
   let previewScrollEndTimer: ReturnType<typeof setTimeout> | null = null;
+  let unlistenFileOpen: UnlistenFn | null = null;
 
   const syncEngine = new ScrollSyncEngine({ enabled: $scrollSyncEnabled, throttleMs: 30 });
+
+  async function openFileFromPath(filePath: string) {
+    const files = get(openFiles);
+    const existingIndex = files.findIndex((f) => f.path === filePath);
+    if (existingIndex >= 0) {
+      switchToFile(existingIndex);
+    } else {
+      const [readErr, content] = await readFile(filePath);
+      if (!readErr && content) {
+        const fileName = filePath.split(/[\\/]/).pop() || '';
+        const fileType = getFileType(fileName);
+        addFile({
+          path: filePath,
+          name: fileName,
+          content: content.content,
+          originalContent: content.content,
+          fileType,
+          isModified: false,
+          cursor: { line: 1, col: 1 },
+        });
+        addRecentFile(filePath, fileName);
+      }
+    }
+  }
 
   function clearEditorSyncFlag() {
     isSyncingEditorTarget = false;
@@ -623,39 +650,17 @@
   onMount(() => {
     setAcrylicEffect($acrylicEnabled);
     document.documentElement.classList.toggle('acrylic-on', $acrylicEnabled);
-    restoreSession().then(() => {
-      getInitFilePath().then(([err, filePath]) => {
-        if (!err && filePath) {
-          const files = get(openFiles);
-          const existingIndex = files.findIndex((f) => f.path === filePath);
-          if (existingIndex >= 0) {
-            switchToFile(existingIndex);
-          } else {
-            readFile(filePath).then(([readErr, content]) => {
-              if (!readErr && content) {
-                const fileName = filePath.split(/[\\/]/).pop() || '';
-                const fileType = getFileType(fileName);
-                addFile({
-                  path: filePath,
-                  name: fileName,
-                  content: content.content,
-                  originalContent: content.content,
-                  fileType,
-                  isModified: false,
-                  cursor: { line: 1, col: 1 },
-                });
-              }
-            });
-          }
-        }
-      });
-    });
+    restoreSession();
+    listen<string>('file-open-requested', (event) => {
+      openFileFromPath(event.payload);
+    }).then((unlisten) => { unlistenFileOpen = unlisten; });
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('paste', handlePaste);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     return () => {
+      if (unlistenFileOpen) unlistenFileOpen();
       clearEditorSyncFlag();
       clearPreviewSyncFlag();
       window.removeEventListener('keydown', handleKeyDown);
@@ -708,6 +713,13 @@
           <MDToolbar editorView={editorView} fileType={$currentFile.fileType} />
         {/if}
         <div class="editor-preview-area" class:focus-layout={$focusMode}>
+          {#if $currentFile}
+            <DynamicIsland
+              content={$currentFile.content}
+              {selectedText}
+              cursor={$currentFile.cursor}
+            />
+          {/if}
           {#if $activeTab === 'split'}
             <div class="split-layout" class:dragging={draggingSplit}>
               <div class="split-editor" style="width: {splitRatio * 100}%">
@@ -925,6 +937,7 @@
     display: flex;
     flex-direction: column;
     background: var(--acrylic-content-bg);
+    position: relative;
   }
 
   .editor-preview-area.focus-layout {

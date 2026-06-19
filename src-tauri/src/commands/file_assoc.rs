@@ -35,7 +35,9 @@ fn register_app_paths(exe_path: &str) -> Result<(), AppError> {
         code: 5021,
         message: format!("设置 App Paths 默认值失败: {}", e),
     })?;
-    app_paths_key.set_value("Path", &std::path::Path::new(exe_path).parent().unwrap().to_string_lossy().to_string()).ok();
+    if let Some(parent) = std::path::Path::new(exe_path).parent() {
+        app_paths_key.set_value("Path", &parent.to_string_lossy().to_string()).ok();
+    }
     Ok(())
 }
 
@@ -43,8 +45,13 @@ fn register_application(exe_path: &str) -> Result<(), AppError> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let command_line = format!("\"{}\" \"%1\"", exe_path);
 
+    let exe_filename = std::path::Path::new(exe_path)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_default();
+
     let (apps_key, _) = hkcu
-        .create_subkey(format!("Software\\Classes\\Applications\\{}\\shell\\open\\command", std::path::Path::new(exe_path).file_name().unwrap().to_string_lossy()))
+        .create_subkey(format!("Software\\Classes\\Applications\\{}\\shell\\open\\command", exe_filename))
         .map_err(|e| AppError::Business {
             code: 5022,
             message: format!("创建 Applications 注册表项失败: {}", e),
@@ -65,7 +72,7 @@ fn register_open_with_list(exe_path: &str) -> Result<(), AppError> {
         .unwrap_or_default();
 
     let (open_with_key, _) = hkcu
-        .create_subkey(format!("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.md\\OpenWithList"))
+        .create_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.md\\OpenWithList")
         .map_err(|e| AppError::Business {
             code: 5024,
             message: format!("创建 OpenWithList 注册表项失败: {}", e),
